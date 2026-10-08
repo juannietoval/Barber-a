@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Barbershop - Booking Premium & Admin</title>
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            background-image: radial-gradient(circle at top right, rgba(242, 201, 76, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.02) 0%, transparent 40%);
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Glassmorphism utils */
+        .glass-panel {
+            background: rgba(25, 25, 25, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #F2C94C 0%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-bg {
+            background: linear-gradient(135deg, #F2C94C 0%, #d4af37 100%);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F2C94C; }
+
+        /* Toast Animation */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .toast-enter { animation: slideUpFade 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- HEADER STICKY -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-[#050505]/90 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl gold-bg flex items-center justify-center text-black shadow-[0_0_15px_rgba(242,201,76,0.3)]">
+                    <i data-lucide="scissors" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">LEVEL</h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] -mt-1">Barbershop</p>
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-6 text-sm font-medium">
+                <button onclick="MapsTo('view-home')" class="hover:text-[#F2C94C] transition-colors nav-btn" data-target="view-home">Inicio</button>
+                <button onclick="MapsTo('view-appointments')" class="hover:text-[#F2C94C] transition-colors nav-btn" data-target="view-appointments">Mis Citas</button>
+                <button onclick="MapsTo('view-profile')" class="hover:text-[#F2C94C] transition-colors nav-btn" data-target="view-profile">Perfil</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-4xl mx-auto w-full relative">
+        
+        <!-- VISTA: INICIO (SERVICIOS) -->
+        <section id="view-home" class="view-section pt-28 pb-24 px-6 min-h-screen">
+            <div class="text-center mb-10">
+                <span class="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-[#F2C94C] mb-4">Experiencia Premium</span>
+                <h2 class="text-4xl sm:text-5xl font-bold mb-4">Eleva tu <span class="gold-gradient">Estilo</span></h2>
+                <p class="text-gray-400 text-sm sm:text-base max-w-md mx-auto">Selecciona uno de nuestros servicios de autor y reserva tu espacio con los mejores profesionales.</p>
+            </div>
+
+            <!-- Contenedor Dinámico de Servicios -->
+            <div id="services-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                <!-- Se llena con JS -->
+            </div>
+        </section>
+
+        <!-- VISTA: RESERVA (CALENDARIO) -->
+        <section id="view-booking" class="view-section hidden pt-28 pb-24 px-6 min-h-screen">
+            <button onclick="MapsTo('view-home')" class="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="text-sm font-medium">Volver a Servicios</span>
+            </button>
+
+            <div class="glass-panel p-6 rounded-2xl mb-6">
+                <h3 class="text-xl font-bold mb-2">Reserva tu Cita</h3>
+                <p class="text-sm text-[#F2C94C]" id="selected-service-name">Cargando servicio...</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Selector de Fecha -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <label class="block text-sm font-medium text-gray-300 mb-4">Selecciona el día</label>
+                    <input type="date" id="booking-date" class="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F2C94C] transition-colors" required>
+                </div>
+
+                <!-- Selector de Hora -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <label class="block text-sm font-medium text-gray-300 mb-4">Horarios Disponibles</label>
+                    <div class="grid grid-cols-3 gap-3" id="time-slots">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+                <button onclick="confirmBooking()" class="w-full gold-bg text-black font-bold py-4 rounded-xl shadow-[0_4px_20px_rgba(242,201,76,0.2)] hover:shadow-[0_4px_25px_rgba(242,201,76,0.4)] transition-all transform hover:-translate-y-1">
+                    Confirmar Reserva
+                </button>
+            </div>
+        </section>
+
+        <!-- VISTA: MIS CITAS -->
+        <section id="view-appointments" class="view-section hidden pt-28 pb-24 px-6 min-h-screen">
+            <h2 class="text-3xl font-bold mb-8">Mis <span class="gold-gradient">Citas</span></h2>
+            
+            <div id="appointments-list" class="space-y-4">
+                <!-- Se llena con JS -->
+            </div>
+        </section>
+
+        <!-- VISTA: PERFIL -->
+        <section id="view-profile" class="view-section hidden pt-28 pb-24 px-6 min-h-screen">
+            <h2 class="text-3xl font-bold mb-8">Mi <span class="gold-gradient">Perfil</span></h2>
+            
+            <div class="glass-panel p-6 rounded-2xl space-y-5 mb-8">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Nombre Completo</label>
+                    <input type="text" id="profile-name" placeholder="Ej. Juan Pérez" class="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F2C94C] transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Teléfono (WhatsApp)</label>
+                    <input type="tel" id="profile-phone" placeholder="+57 300 000 0000" class="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F2C94C] transition-colors">
+                </div>
+                
+                <button onclick="saveProfile()" class="w-full border border-[#F2C94C] text-[#F2C94C] font-bold py-3 rounded-xl hover:bg-[#F2C94C] hover:text-black transition-colors flex justify-center items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Datos
+                </button>
+            </div>
+
+            <!-- Acceso a Staff (Admin) -->
+            <div class="pt-6 border-t border-white/10 text-center">
+                <button onclick="MapsTo('view-admin')" class="text-sm text-gray-500 hover:text-white flex items-center justify-center gap-2 w-full transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Acceso Staff / Administrador
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VISTA: PANEL DE ADMINISTRACIÓN (STAFF ONLY)-->
+        <!-- ========================================== -->
+        <section id="view-admin" class="view-section hidden pt-28 pb-24 px-6 min-h-screen">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold">Panel <span class="gold-gradient">Staff</span></h2>
+                    <p class="text-gray-400 text-sm">Gestión de servicios y precios</p>
+                </div>
+                <button onclick="MapsTo('view-profile')" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Formulario Añadir/Editar Servicio -->
+            <div class="glass-panel p-6 rounded-2xl mb-8 border border-[#F2C94C]/30">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2" id="admin-form-title">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-[#F2C94C]"></i> Nuevo Servicio
+                </h3>
+                <input type="hidden" id="admin-service-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Nombre del Servicio</label>
+                        <input type="text" id="admin-service-name" placeholder="Ej. Corte Clásico" class="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#F2C94C] outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Precio</label>
+                            <input type="text" id="admin-service-price" placeholder="Ej. $25.000" class="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#F2C94C] outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Duración</label>
+                            <input type="text" id="admin-service-duration" placeholder="Ej. 45 min" class="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#F2C94C] outline-none">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="saveAdminService()" class="flex-1 gold-bg text-black font-bold py-2 rounded-lg hover:opacity-90 transition-opacity">
+                            Guardar Servicio
+                        </button>
+                        <button onclick="resetAdminForm()" class="px-4 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Servicios Actuales -->
+            <h3 class="text-lg font-bold mb-4">Servicios Activos</h3>
+            <div id="admin-services-list" class="space-y-3">
+                <!-- Se llena con JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="sm:hidden fixed bottom-0 left-0 w-full z-50 bg-[#0A0A0A] border-t border-white/10 pb-safe">
+        <div class="flex justify-around items-center h-16 px-2">
+            <button onclick="MapsTo('view-home')" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#F2C94C] transition-colors nav-btn" data-target="view-home">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Inicio</span>
+            </button>
+            <button onclick="MapsTo('view-appointments')" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#F2C94C] transition-colors nav-btn" data-target="view-appointments">
+                <i data-lucide="calendar" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Citas</span>
+            </button>
+            <button onclick="MapsTo('view-profile')" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#F2C94C] transition-colors nav-btn" data-target="view-profile">
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Perfil</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR DE NOTIFICACIONES (TOAST) -->
+    <div id="toast-container" class="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-[60] flex flex-col gap-2"></div>
+
+    <!-- LOGICA JAVASCRIPT -->
+    <script>
+        // ==========================================
+        // 1. GESTIÓN DE ESTADO GLOBAL (INFRAESTRUCTURA)
+        // ==========================================
+        
+        // Datos por defecto por si es la primera vez que entra
+        const defaultServices = [
+            { id: 's1', name: 'Corte Clásico Premium', price: '$25.000', duration: '45 min', icon: 'scissors' },
+            { id: 's2', name: 'Barba Spa Estilo', price: '$15.000', duration: '30 min', icon: 'droplet' },
+            { id: 's3', name: 'Combo Level (Corte + Barba)', price: '$35.000', duration: '1 hora', icon: 'star' }
+        ];
+
+        // Objeto global que maneja toda la data
+        const State = {
+            user: JSON.parse(localStorage.getItem('barber_user')) || { name: '', phone: '' },
+            appointments: JSON.parse(localStorage.getItem('barber_appointments')) || [],
+            services: JSON.parse(localStorage.getItem('barber_services')) || defaultServices,
+            currentBooking: { serviceId: null, date: null, time: null }
+        };
+
+        // Función para guardar en el "Backend" (Por ahora LocalStorage)
+        // MICRO-PROMPT 1: Aquí es donde cambiarás localStorage por Firebase SetDoc/UpdateDoc
+        function syncStorage() {
+            localStorage.setItem('barber_user', JSON.stringify(State.user));
+            localStorage.setItem('barber_appointments', JSON.stringify(State.appointments));
+            localStorage.setItem('barber_services', JSON.stringify(State.services));
+        }
+
+        // ==========================================
+        // 2. SISTEMA DE NOTIFICACIONES (FASE C)
+        // ==========================================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bg = type === 'success' ? 'bg-[#151515] border-[#F2C94C]/50' : 'bg-[#2a0e0e] border-red-500/50';
+            const icon = type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5 text-[#F2C94C]"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>';
+            
+            toast.className = `toast-enter flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${bg} text-white text-sm`;
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ==========================================
+        // 3. ENRUTADOR DE VISTAS (FASE B)
+        // ==========================================
+        function MapsTo(viewId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.view-section').forEach(sec => {
+                sec.classList.add('hidden');
+            });
+            
+            // Mostrar la solicitada
+            const target = document.getElementById(viewId);
+            if (target) {
+                target.classList.remove('hidden');
+                window.scrollTo(0, 0);
+            }
+
+            // Actualizar color de los botones de navegación
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.target === viewId) {
+                    btn.classList.add('text-[#F2C94C]');
+                    btn.classList.remove('text-gray-500');
+                } else {
+                    btn.classList.remove('text-[#F2C94C]');
+                    btn.classList.add('text-gray-500');
+                }
+            });
+
+            // Si entra al admin, renderizar lista de servicios del admin
+            if (viewId === 'view-admin') {
+                renderAdminServices();
+            }
+        }
+
+        // ==========================================
+        // 4. LÓGICA DE USUARIO Y PERFIL
+        // ==========================================
+        function loadProfile() {
+            document.getElementById('profile-name').value = State.user.name;
+            document.getElementById('profile-phone').value = State.user.phone;
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('profile-name').value.trim();
+            const phone = document.getElementById('profile-phone').value.trim();
+
+            if (!name || !phone) {
+                showToast('Por favor, completa todos los campos', 'error');
+                return;
+            }
+
+            State.user.name = name;
+            State.user.phone = phone;
+            syncStorage();
+            showToast('Perfil guardado exitosamente');
+        }
+
+        // ==========================================
+        // 5. MOTOR DE RESERVAS (CLIENTE)
+        // ==========================================
+        function renderServices() {
+            const container = document.getElementById('services-container');
+            container.innerHTML = ''; // Limpiar
+
+            State.services.forEach(srv => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-5 rounded-2xl flex items-center justify-between group hover:border-[#F2C94C]/50 transition-all cursor-pointer';
+                card.onclick = () => initBooking(srv.id);
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i data-lucide="${srv.icon || 'scissors'}" class="w-5 h-5 text-[#F2C94C]"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-lg">${srv.name}</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-2">
+                                <i data-lucide="clock" class="w-3 h-3"></i> ${srv.duration}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-[#F2C94C] font-bold text-lg">${srv.price}</span>
+                        <span class="text-xs text-gray-500 bg-white/10 px-2 py-1 rounded mt-1 inline-block">Reservar</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function initBooking(serviceId) {
+            // Guardia: Exigir perfil
+            if (!State.user.name || !State.user.phone) {
+                MapsTo('view-profile');
+                showToast('Debes completar tu perfil para reservar', 'error');
+                return;
+            }
+
+            const service = State.services.find(s => s.id === serviceId);
+            if (!service) return;
+
+            State.currentBooking.serviceId = serviceId;
+            State.currentBooking.time = null; // resetear hora
+            
+            document.getElementById('selected-service-name').innerText = `${service.name} - ${service.price}`;
+            
+            // Configurar fecha mínima (Hoy)
+            const dateInput = document.getElementById('booking-date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+            if(!dateInput.value) dateInput.value = today;
+
+            renderTimeSlots();
+            MapsTo('view-booking');
+        }
+
+        // Generar horas dinámicamente
+        function renderTimeSlots() {
+            const container = document.getElementById('time-slots');
+            const selectedDate = document.getElementById('booking-date').value;
+            container.innerHTML = '';
+
+            const hours = ['10:00 AM', '11:00 AM', '12:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM'];
+
+            hours.forEach(time => {
+                // MICRO-PROMPT 2: Lógica de concurrencia. Aquí verificas si la cita ya existe en Firebase
+                const isBooked = State.appointments.some(appt => appt.date === selectedDate && appt.time === time);
+
+                const btn = document.createElement('button');
+                btn.className = `py-2 rounded-lg text-sm font-medium border transition-all ${
+                    isBooked 
+                    ? 'border-red-500/30 bg-red-500/10 text-red-400 opacity-50 cursor-not-allowed' 
+                    : 'border-white/10 bg-[#111] hover:border-[#F2C94C] hover:text-[#F2C94C]'
+                }`;
+                btn.innerText = isBooked ? 'Ocupado' : time;
+
+                if (!isBooked) {
+                    btn.onclick = (e) => {
+                        // Desmarcar otros
+                        Array.from(container.children).forEach(c => {
+                            if(!c.classList.contains('cursor-not-allowed')) {
+                                c.classList.remove('bg-[#F2C94C]', 'text-black', 'border-[#F2C94C]');
+                                c.classList.add('bg-[#111]', 'text-white', 'border-white/10');
+                            }
+                        });
+                        // Marcar seleccionado
+                        e.target.classList.remove('bg-[#111]', 'text-white', 'border-white/10');
+                        e.target.classList.add('bg-[#F2C94C]', 'text-black', 'border-[#F2C94C]');
+                        State.currentBooking.time = time;
+                    };
+                }
+                container.appendChild(btn);
+            });
+        }
+
+        // Detectar cambio de fecha
+        document.getElementById('booking-date').addEventListener('change', () => {
+            State.currentBooking.time = null;
+            renderTimeSlots();
+        });
+
+        function confirmBooking() {
+            const date = document.getElementById('booking-date').value;
+            const time = State.currentBooking.time;
+            const service = State.services.find(s => s.id === State.currentBooking.serviceId);
+
+            if (!date || !time) {
+                showToast('Selecciona una fecha y hora', 'error');
+                return;
+            }
+
+            const newAppointment = {
+                id: Date.now().toString(),
+                serviceName: service.name,
+                price: service.price,
+                date: date,
+                time: time,
+                status: 'Confirmada',
+                createdAt: new Date().toISOString()
+            };
+
+            State.appointments.push(newAppointment);
+            syncStorage();
+
+            // MICRO-PROMPT 3: Aquí dispararías el fetch() al Webhook de Make.com
+            /*
+            fetch('URL_DE_MAKE', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: State.user, appointment: newAppointment })
+            });
+            */
+
+            showToast('¡Reserva confirmada con éxito!');
+            renderAppointments();
+            MapsTo('view-appointments');
+        }
+
+        function renderAppointments() {
+            const container = document.getElementById('appointments-list');
+            container.innerHTML = '';
+
+            if (State.appointments.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-10">No tienes citas programadas.</div>';
+                return;
+            }
+
+            // Ordenar por fecha (más recientes primero)
+            const sorted = [...State.appointments].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Filtro Básico (Fase C)
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            sorted.forEach(appt => {
+                // Lógica de estado (Hoy/Próxima vs Historial)
+                const isPast = appt.date < todayStr;
+                const statusColor = isPast ? 'text-gray-400' : 'text-green-400';
+                const statusText = isPast ? 'Completada' : 'Confirmada';
+
+                const card = document.createElement('div');
+                card.className = `glass-panel p-5 rounded-2xl border-l-4 ${isPast ? 'border-l-gray-600 opacity-70' : 'border-l-[#F2C94C]'}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-lg">${appt.serviceName}</h4>
+                            <div class="text-sm text-gray-400 mt-2 space-y-1">
+                                <p class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> ${appt.date}</p>
+                                <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> ${appt.time}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="block font-bold mb-1">${appt.price}</span>
+                            <span class="text-xs font-medium ${statusColor} bg-white/5 px-2 py-1 rounded inline-block">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // 6. PANEL DE ADMINISTRACIÓN (STAFF ONLY)
+        // ==========================================
+        
+        function renderAdminServices() {
+            const list = document.getElementById('admin-services-list');
+            list.innerHTML = '';
+
+            State.services.forEach(srv => {
+                const item = document.createElement('div');
+                item.className = 'bg-[#111] p-4 rounded-xl border border-white/5 flex justify-between items-center';
+                item.innerHTML = `
+                    <div>
+                        <h4 class="font-bold">${srv.name}</h4>
+                        <p class="text-xs text-gray-400">${srv.price} • ${srv.duration}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editAdminService('${srv.id}')" class="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteAdminService('${srv.id}')" class="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function saveAdminService() {
+            const idInput = document.getElementById('admin-service-id').value;
+            const name = document.getElementById('admin-service-name').value.trim();
+            const price = document.getElementById('admin-service-price').value.trim();
+            const duration = document.getElementById('admin-service-duration').value.trim();
+
+            if (!name || !price || !duration) {
+                showToast('Completa todos los campos', 'error');
+                return;
+            }
+
+            if (idInput) {
+                // Editar existente
+                const index = State.services.findIndex(s => s.id === idInput);
+                if (index !== -1) {
+                    State.services[index] = { ...State.services[index], name, price, duration };
+                    showToast('Servicio actualizado');
+                }
+            } else {
+                // Añadir nuevo
+                const newService = {
+                    id: 's_' + Date.now(),
+                    name, price, duration, icon: 'scissors' // icono por defecto
+                };
+                State.services.push(newService);
+                showToast('Nuevo servicio añadido');
+            }
+
+            syncStorage();
+            resetAdminForm();
+            renderAdminServices();
+            renderServices(); // Actualizar la vista principal
+        }
+
+        function editAdminService(id) {
+            const srv = State.services.find(s => s.id === id);
+            if (!srv) return;
+
+            document.getElementById('admin-form-title').innerHTML = '<i data-lucide="edit-2" class="w-5 h-5 text-blue-400"></i> Editar Servicio';
+            document.getElementById('admin-service-id').value = srv.id;
+            document.getElementById('admin-service-name').value = srv.name;
+            document.getElementById('admin-service-price').value = srv.price;
+            document.getElementById('admin-service-duration').value = srv.duration;
+            window.scrollTo(0, 0);
+            lucide.createIcons();
+        }
+
+        function deleteAdminService(id) {
+            if(confirm('¿Estás seguro de eliminar este servicio?')) {
+                State.services = State.services.filter(s => s.id !== id);
+                syncStorage();
+                showToast('Servicio eliminado', 'success');
+                renderAdminServices();
+                renderServices(); // Actualizar la vista principal
+            }
+        }
+
+        function resetAdminForm() {
+            document.getElementById('admin-form-title').innerHTML = '<i data-lucide="plus-circle" class="w-5 h-5 text-[#F2C94C]"></i> Nuevo Servicio';
+            document.getElementById('admin-service-id').value = '';
+            document.getElementById('admin-service-name').value = '';
+            document.getElementById('admin-service-price').value = '';
+            document.getElementById('admin-service-duration').value = '';
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadProfile();
+            renderServices();
+            renderAppointments();
+            MapsTo('view-home'); // Vista por defecto
+        });
+    </script>
+</body>
+</html>

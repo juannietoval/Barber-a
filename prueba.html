@@ -1,0 +1,237 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, Scissors, ChevronRight, AlertCircle } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+// --- CONFIGURACIÓN DE SUPABASE ---
+// Reemplaza con tus credenciales reales
+const supabaseUrl = 'https://tu-proyecto.supabase.co';
+const supabaseKey = 'tu-anon-key';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// --- DATOS DE REFERENCIA ---
+const SERVICES = [
+  { id: 1, name: 'Corte', price: 25000 },
+  { id: 2, name: 'Corte + Barba', price: 30000 },
+  { id: 3, name: 'Barba', price: 10000 },
+  { id: 4, name: 'Combo Completo', price: 32000 },
+  { id: 5, name: 'Corte + Cejas', price: 27000 },
+  { id: 6, name: 'Cejas', price: 10000 },
+];
+
+const TIME_SLOTS = [
+  '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
+  '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'
+];
+
+// Generar días para Febrero 2026 (28 días)
+const generateFeb2026Days = () => {
+  return Array.from({ length: 28 }, (_, i) => {
+    const date = new Date(2026, 1, i + 1);
+    const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' });
+    return {
+      num: i + 1,
+      abbrev: dayName.charAt(0).toUpperCase() + dayName.slice(1, 3),
+      fullDate: `2026-02-${String(i + 1).padStart(2, '0')}`
+    };
+  });
+};
+
+const FEB_DAYS = generateFeb2026Days();
+const WHATSAPP_NUMBER = '56912345678'; // Número de destino (Ej: Chile)
+
+export default function LevelBarbershopBooking() {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  
+  const [occupiedSlots, setOccupiedSlots] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // --- LÓGICA DE SUPABASE ---
+  const checkAvailability = async (date) => {
+    setIsLoading(true);
+    setError(null);
+    setSelectedTime(null); // Resetear hora al cambiar de día
+
+    try {
+      // Consulta a Supabase: Traer horas reservadas para la fecha seleccionada
+      const { data, error: fetchError } = await supabase
+        .from('reservas')
+        .select('hora')
+        .eq('fecha', date);
+
+      if (fetchError) throw fetchError;
+
+      // Extraer solo las horas de la respuesta (ej: ['10:00 AM', '02:00 PM'])
+      const occupied = data ? data.map(res => res.hora) : [];
+      setOccupiedSlots(occupied);
+
+    } catch (err) {
+      console.error('Error al consultar disponibilidad:', err);
+      setError('No pudimos cargar la disponibilidad. Por favor, intenta de nuevo.');
+      // Fallback para la demo en caso de no tener Supabase configurado
+      setOccupiedSlots(['12:00 PM', '04:00 PM', '05:00 PM']); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedDate) {
+      checkAvailability(selectedDate);
+    }
+  }, [selectedDate]);
+
+  // --- LÓGICA DE RESERVA (WHATSAPP) ---
+  const handleBooking = () => {
+    if (!selectedDate || !selectedTime || !selectedService) return;
+
+    const formatPrice = new Intl.NumberFormat('es-CL', { 
+      style: 'currency', 
+      currency: 'CLP' 
+    }).format(selectedService.price);
+
+    const message = `¡Hola! Quiero agendar una cita en Level Barbershop.%0A%0A*Detalles de la reserva:*%0A✂️ Servicio: ${selectedService.name}%0A📅 Fecha: ${selectedDate}%0A⏰ Hora: ${selectedTime}%0A💰 Total: ${formatPrice}%0A%0A¿Me confirman la disponibilidad?`;
+    
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const isFormComplete = selectedDate && selectedTime && selectedService;
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-[#d4af37] selection:text-black pb-24">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 px-6 py-4 text-center">
+        <h1 className="text-2xl font-black tracking-widest uppercase italic">
+          LEVEL <span className="text-[#d4af37]">BARBERSHOP</span>
+        </h1>
+        <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Precisión & Estilo</p>
+      </header>
+
+      <main className="max-w-lg mx-auto px-4 mt-8 space-y-10">
+        
+        {/* Catálogo de Servicios */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Scissors className="w-5 h-5 text-[#d4af37]" />
+            <h2 className="text-lg font-semibold tracking-wide">Selecciona tu Servicio</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {SERVICES.map((service) => (
+              <label 
+                key={service.id} 
+                className={`relative p-4 rounded-xl cursor-pointer transition-all duration-300 border ${
+                  selectedService?.id === service.id 
+                    ? 'bg-[#d4af37]/10 border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
+                    : 'bg-white/5 border-white/10 hover:border-white/30 backdrop-blur-sm'
+                }`}
+              >
+                <input 
+                  type="radio" 
+                  name="service" 
+                  className="hidden" 
+                  onChange={() => setSelectedService(service)}
+                />
+                <div className="flex flex-col h-full justify-between">
+                  <span className={`font-medium text-sm ${selectedService?.id === service.id ? 'text-[#d4af37]' : 'text-gray-200'}`}>
+                    {service.name}
+                  </span>
+                  <span className="text-lg font-bold mt-2">
+                    ${service.price.toLocaleString('es-CL')}
+                  </span>
+                </div>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        {/* Selector de Fecha */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar className="w-5 h-5 text-[#d4af37]" />
+            <h2 className="text-lg font-semibold tracking-wide">Febrero 2026</h2>
+          </div>
+          <div className="flex overflow-x-auto pb-4 gap-3 hide-scrollbar snap-x">
+            {FEB_DAYS.map((day) => (
+              <button
+                key={day.fullDate}
+                onClick={() => setSelectedDate(day.fullDate)}
+                className={`snap-start shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all border ${
+                  selectedDate === day.fullDate
+                    ? 'bg-[#d4af37] text-black border-[#d4af37] shadow-[0_0_20px_rgba(212,175,55,0.3)]'
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 backdrop-blur-sm'
+                }`}
+              >
+                <span className="text-xs uppercase font-medium">{day.abbrev}</span>
+                <span className="text-2xl font-bold mt-1">{day.num}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Grid de Horarios */}
+        <section className={`transition-opacity duration-300 ${selectedDate ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-5 h-5 text-[#d4af37]" />
+            <h2 className="text-lg font-semibold tracking-wide">Hora Disponible</h2>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-red-400 bg-red-400/10 p-3 rounded-lg border border-red-400/20 mb-4 text-sm">
+              <AlertCircle className="w-4 h-4" />
+              <p>{error}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-3">
+            {TIME_SLOTS.map((time) => {
+              const isOccupied = occupiedSlots.includes(time);
+              const isSelected = selectedTime === time;
+
+              return (
+                <button
+                  key={time}
+                  disabled={isOccupied || isLoading}
+                  onClick={() => setSelectedTime(time)}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all border ${
+                    isOccupied 
+                      ? 'bg-[#1a1a1a] text-gray-600 border-transparent cursor-not-allowed'
+                      : isSelected
+                        ? 'bg-[#d4af37] text-black border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.3)]'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/30 backdrop-blur-sm'
+                  } ${isLoading && !isOccupied ? 'animate-pulse' : ''}`}
+                >
+                  {time}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </main>
+
+      {/* Floating Action Button */}
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent">
+        <button
+          disabled={!isFormComplete}
+          onClick={handleBooking}
+          className={`w-full max-w-lg mx-auto flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
+            isFormComplete 
+              ? 'bg-[#d4af37] text-black shadow-[0_4px_20px_rgba(212,175,55,0.4)] hover:scale-[1.02]' 
+              : 'bg-white/10 text-gray-500 cursor-not-allowed backdrop-blur-md'
+          }`}
+        >
+          Agendar Cita
+          <ChevronRight className={`w-5 h-5 ${isFormComplete ? 'animate-pulse' : ''}`} />
+        </button>
+      </div>
+
+      {/* Estilos CSS utilitarios para ocultar el scrollbar */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
+    </div>
+  );
+}

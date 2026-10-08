@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación Mecanismo de Hundimiento - UTP</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* UI Overlay Container */
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Permite clicks a través en áreas vacías */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Header - Minimalista y menos intrusivo */
+        #header {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            padding: 20px 40px;
+            box-sizing: border-box;
+            text-align: right;
+            background: linear-gradient(to bottom, rgba(10, 20, 30, 0.8) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        h1 { 
+            margin: 0; 
+            font-size: 1.8rem; 
+            letter-spacing: 2px; 
+            color: #00e5ff; 
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+            font-weight: 300;
+        }
+        .subtitle { font-size: 0.9rem; color: #80deea; margin-top: 5px; font-weight: 400; opacity: 0.8; }
+        .paper-ref { 
+            font-size: 0.75rem; 
+            font-style: italic; 
+            color: #b2ebf2; 
+            opacity: 0.6;
+            margin-top: 5px; 
+        }
+
+        /* Dashboard Telemetry - Estilo Glassmorphism Colapsable */
+        #dashboard {
+            position: absolute;
+            top: 120px;
+            left: 30px;
+            width: 260px;
+            background: rgba(12, 28, 40, 0.65); /* Un poco más oscuro para consistencia */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-left: 2px solid rgba(0, 229, 255, 0.6);
+            border-top: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 4px;
+            padding: 0; /* Padding movido a los hijos para colapsar limpiamente */
+            color: #e0f7fa;
+            font-family: 'Consolas', 'Monaco', monospace;
+            pointer-events: auto; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            transition: max-height 0.4s ease, background-color 0.3s;
+            overflow: hidden;
+            max-height: 400px; /* Altura máxima esperada cuando está abierto */
+        }
+        
+        /* Estado Colapsado */
+        #dashboard.collapsed {
+            max-height: 46px; /* Altura solo del título */
+            background: rgba(5, 15, 25, 0.9); /* Más opaco cuando está cerrado */
+            border-left: 2px solid rgba(0, 229, 255, 0.3);
+        }
+        
+        #dashboard:hover {
+            background: rgba(12, 28, 40, 0.8);
+            border-left: 2px solid rgba(0, 229, 255, 1);
+        }
+
+        .dash-title {
+            font-size: 0.9rem;
+            color: #00bcd4;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(0, 188, 212, 0.3);
+            padding: 15px 20px;
+            margin-bottom: 0;
+            cursor: pointer; /* Indica que es clicable */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        
+        .dash-title:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #00e5ff;
+        }
+
+        .toggle-icon {
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: transform 0.3s;
+        }
+
+        /* Contenedor interno para el contenido que se oculta */
+        #dash-content {
+            padding: 0 20px 20px 20px;
+            padding-top: 10px;
+        }
+        
+        .metric { 
+            margin-bottom: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.85rem;
+        }
+        .metric label { color: #b2ebf2; opacity: 0.8; }
+        .metric span { color: #fff; font-weight: bold; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        
+        .alert-box {
+            margin-top: 15px;
+            padding: 8px;
+            background: rgba(255, 23, 68, 0.2);
+            border: 1px solid #ff1744;
+            color: #ff1744;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: none;
+            animation: pulseAlert 1s infinite;
+            border-radius: 2px;
+            letter-spacing: 1px;
+        }
+
+        @keyframes pulseAlert { 0% { opacity: 0.6; } 100% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        /* Contenedor para el panel de control (Lil-GUI) */
+        #controls-container {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            pointer-events: auto; 
+        }
+        
+        /* Personalización de ALTO CONTRASTE para lil-gui */
+        .lil-gui { 
+            --background-color: rgba(5, 15, 25, 0.95); /* Fondo casi negro para máximo contraste */
+            --text-color: #ffffff; /* Texto blanco puro */
+            --title-background-color: #004d40; /* Título oscuro y sobrio */
+            --widget-color: #444; /* Fondo de widgets oscuro */
+            --hover-color: #555;
+            --focus-color: #00e5ff; /* Acento cian al interactuar */
+            --number-color: #00e5ff;
+            --string-color: #00e5ff;
+            
+            border: 1px solid rgba(0, 229, 255, 0.3); /* Borde sutil para definir el panel */
+            border-radius: 4px;
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.7); /* Sombra fuerte para separar del fondo */
+            backdrop-filter: blur(10px);
+        }
+        
+        .lil-gui .slider { background-color: #222; }
+        .lil-gui .slider-fg { background-color: #00bcd4; }
+
+        /* Footer discreto */
+        #footer {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.7rem;
+            pointer-events: none;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00e5ff;
+            font-size: 1.5rem;
+            font-family: sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: fadePulse 1.5s infinite;
+        }
+        @keyframes fadePulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+    <!-- Import Three.js as ES Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="loading">Sistemas Online...</div>
+
+    <!-- UI Layer -->
+    <div id="ui-container">
+        <div id="header">
+            <h1>MECANISMO DE HUNDIMIENTO</h1>
+            <div class="subtitle">Laboratorio Virtual de Física I - UTP</div>
+            <div class="paper-ref">
+                Por Juan Esteban Nieto Valencia 
+            </div>
+        </div>
+
+        <div id="dashboard">
+            <div class="dash-title" id="dash-toggle">
+                Telemetría
+                <span class="toggle-icon">−</span>
+            </div>
+            <div id="dash-content">
+                <div class="metric"><label>Profundidad (h):</label> <span id="disp-depth">0.0 m</span></div>
+                <div class="metric"><label>Presión Ext:</label> <span id="disp-pressure">1.00 atm</span></div>
+                <div class="metric"><label>Volumen Casco:</label> <span id="disp-volume">100%</span></div>
+                <div class="metric"><label>Densidad Sub:</label> <span id="disp-density">1000 kg/m³</span></div>
+                <div class="metric"><label>Estado:</label> <span id="disp-status" style="color: #00e676;">NEUTRO</span></div>
+                <div id="alert-implosion" class="alert-box">⚠ RIESGO DE IMPLOSIÓN</div>
+            </div>
+        </div>
+
+        <!-- Contenedor específico para controles -->
+        <div id="controls-container"></div>
+
+        <div id="footer">
+            Interactuar: Click Izq (Rotar) | Click Der (Mover) | Rueda (Zoom)
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        // --- CONSTANTES FÍSICAS ---
+        const G = 9.81; 
+        const RHO_AGUA = 1025; 
+        const P_ATM = 101325; 
+        
+        // Parámetros del Submarino
+        const SUB_LENGTH = 13; 
+        const SUB_RADIUS = 1.5; 
+        const BASE_VOLUME = Math.PI * Math.pow(SUB_RADIUS, 2) * (SUB_LENGTH - 2) + (4/3)*Math.PI*Math.pow(SUB_RADIUS,3); 
+        const BASE_MASS = BASE_VOLUME * RHO_AGUA * 0.90; 
+        const MAX_BALLAST_MASS = BASE_VOLUME * RHO_AGUA * 0.30; 
+        
+        const HULL_COMPRESSION_FACTOR = 0.00015; 
+
+        // --- VARIABLES DE ESTADO ---
+        const state = {
+            depth: 0,       
+            velocity: 0,    
+            ballastLevel: 0, 
+            hullVolume: BASE_VOLUME,
+            isImploded: false,
+            lastBallastLevel: 0,
+            lastPhysicsY: 0 // Nuevo: Para trackear movimiento físico real sin ruido visual
+        };
+
+        // --- ESCENA THREE.JS ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1b2631); 
+        scene.fog = new THREE.Fog(0x1b2631, 20, 120);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        // Forward declaration de subGroup para usar en setInitialCamera
+        let subGroup;
+
+        // Función para ajustar cámara inicial y manejar redimensionamiento
+        function setInitialCamera() {
+            // Obtener la posición Y actual del submarino (si existe) para no reiniciar la vista a la superficie
+            const currentSubY = subGroup ? subGroup.position.y : 0;
+            
+            if (window.innerWidth < 768) {
+                // Móvil (Retrato): Alejar cámara para ver todo el sub
+                camera.position.set(35, 8 + currentSubY, 10); 
+            } else {
+                // Escritorio
+                camera.position.set(26, 6 + currentSubY, 5);
+            }
+            // Importante: Si los controles existen, actualizar su objetivo también
+            // Nota: controls se define más abajo, esta función se llama también en resize
+        }
+        setInitialCamera();
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 0, 0);
+        
+        // Ajustes de Zoom solicitados: Más fuerte, rápido y con mayor rango
+        controls.zoomSpeed = 4.0; // Velocidad de zoom mucho más alta
+        controls.minDistance = 2; // Permitir acercarse bastante sin atravesar
+        controls.maxDistance = 300; // Permitir alejarse mucho más para ver el entorno
+
+        // --- ILUMINACIÓN ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); 
+        scene.add(ambientLight);
+
+        const hemiLight = new THREE.HemisphereLight(0x445566, 0x000000, 0.6);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(10, 50, 20);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        const spotLight = new THREE.SpotLight(0xffffff, 8, 70, 0.4, 0.2, 1);
+        scene.add(spotLight);
+
+        // --- ENTORNO ---
+        const waterGeo = new THREE.PlaneGeometry(2000, 2000);
+        const waterMat = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffff, 
+            transparent: true, 
+            opacity: 0.45, 
+            side: THREE.DoubleSide,
+            roughness: 0.0,
+            metalness: 0.3,
+            emissive: 0x004455,
+            emissiveIntensity: 0.2
+        });
+        const seaSurface = new THREE.Mesh(waterGeo, waterMat);
+        seaSurface.rotation.x = -Math.PI / 2;
+        scene.add(seaSurface);
+
+        const seaBedGeo = new THREE.PlaneGeometry(2000, 2000, 64, 64);
+        const pos = seaBedGeo.attributes.position;
+        for(let i=0; i < pos.count; i++){
+            pos.setZ(i, Math.random() * 8);
+        }
+        const seaBedMat = new THREE.MeshStandardMaterial({ 
+            color: 0x0a1a2a, 
+            roughness: 0.9 
+        });
+        const seaBed = new THREE.Mesh(seaBedGeo, seaBedMat);
+        seaBed.rotation.x = -Math.PI / 2;
+        seaBed.position.y = -600; 
+        scene.add(seaBed);
+        
+        const gridHelper = new THREE.GridHelper(100, 20, 0x00ffff, 0x004444);
+        gridHelper.position.y = 0.1;
+        gridHelper.material.opacity = 0.2;
+        gridHelper.material.transparent = true;
+        scene.add(gridHelper);
+
+        // --- CONSTRUCCIÓN DEL SUBMARINO ---
+        // Refactorización: Corrección Geométrica de Proa (Nose Fix)
+        
+        subGroup = new THREE.Group();
+        scene.add(subGroup);
+
+        // -- MATERIALES APROBADOS (NO TOCAR) --
+        // Material Standard Gris Claro Lechoso para visibilidad óptima
+        const matHull = new THREE.MeshStandardMaterial({
+            color: 0xd0d0d0,        
+            roughness: 0.5,         
+            metalness: 0.1,         
+            transparent: true,
+            opacity: 0.4,           
+            side: THREE.DoubleSide, 
+            depthWrite: false       
+        });
+
+        const matStructure = new THREE.MeshStandardMaterial({
+            color: 0x222222,        // Estructura oscura para contraste interno
+            metalness: 0.6,
+            roughness: 0.7
+        });
+
+        const matDetail = new THREE.MeshStandardMaterial({
+            color: 0xff9900,        // Naranja
+            metalness: 0.3,
+            roughness: 0.4
+        });
+
+        const hullLen = SUB_LENGTH - (SUB_RADIUS * 2);
+        const SEGMENTS = 48; 
+
+        // 1. CASCO CILÍNDRICO
+        const hullGeo = new THREE.CylinderGeometry(SUB_RADIUS, SUB_RADIUS, hullLen, SEGMENTS);
+        const mainHull = new THREE.Mesh(hullGeo, matHull);
+        mainHull.rotation.x = Math.PI / 2;
+        mainHull.renderOrder = 1; 
+        subGroup.add(mainHull);
+
+        // 2. ESTRUCTURA INTERNA
+        const railCount = 4;
+        const railGeo = new THREE.BoxGeometry(0.15, 0.15, hullLen * 0.95);
+        for(let i=0; i<railCount; i++) {
+            const rail = new THREE.Mesh(railGeo, matStructure);
+            const angle = (Math.PI / 2) + (i * Math.PI / 2);
+            rail.position.x = Math.cos(angle) * (SUB_RADIUS * 0.9);
+            rail.position.y = Math.sin(angle) * (SUB_RADIUS * 0.9);
+            subGroup.add(rail);
+        }
+
+        const ribGeo = new THREE.TorusGeometry(SUB_RADIUS * 0.9, 0.1, 8, SEGMENTS);
+        const ribCount = 5;
+        for(let i=0; i<ribCount; i++){
+            const rib = new THREE.Mesh(ribGeo, matStructure);
+            rib.position.z = -hullLen/2 + (hullLen/(ribCount-1)) * i;
+            subGroup.add(rib);
+        }
+
+        // --- TANQUES DE LASTRE (LÓGICA CRÍTICA) ---
+        const waterLevelGeo = new THREE.CylinderGeometry(SUB_RADIUS * 0.85, SUB_RADIUS * 0.85, hullLen * 0.4, SEGMENTS);
+        const waterFillMat = new THREE.MeshBasicMaterial({ 
+            color: 0x00bfff, 
+            opacity: 0.7, 
+            transparent: true,
+            side: THREE.DoubleSide
+        }); 
+
+        const waterFrontMesh = new THREE.Mesh(waterLevelGeo, waterFillMat);
+        waterFrontMesh.rotation.x = Math.PI / 2; 
+        waterFrontMesh.position.z = hullLen * 0.25;
+        waterFrontMesh.scale.set(1, 1, 0.01);
+        subGroup.add(waterFrontMesh);
+
+        const waterBackMesh = new THREE.Mesh(waterLevelGeo, waterFillMat);
+        waterBackMesh.rotation.x = Math.PI / 2;
+        waterBackMesh.position.z = -hullLen * 0.25;
+        waterBackMesh.scale.set(1, 1, 0.01);
+        subGroup.add(waterBackMesh);
+
+        // 3. NARIZ (CORRECCIÓN DE GEOMETRÍA)
+        // Usamos SphereGeometry (hemisferio superior por defecto)
+        const noseGeo = new THREE.SphereGeometry(SUB_RADIUS, SEGMENTS, 24, 0, Math.PI * 2, 0, Math.PI / 2);
+        const nose = new THREE.Mesh(noseGeo, matHull);
+        
+        // FIX CRÍTICO: Rotación positiva (Math.PI / 2) para que el polo Y (ahora Z) apunte hacia adelante (+Z)
+        nose.rotation.x = Math.PI / 2; 
+        
+        nose.position.z = (hullLen / 2) - 0.05; // Mantenemos el solapamiento para ocultar la unión
+        nose.renderOrder = 1;
+        subGroup.add(nose); 
+
+        // Escotilla frontal (Detalle sólido)
+        const hatchGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.2, 16);
+        const hatch = new THREE.Mesh(hatchGeo, matStructure);
+        hatch.rotation.x = Math.PI / 2;
+        hatch.position.z = hullLen / 2 + SUB_RADIUS - 0.2;
+        subGroup.add(hatch);
+
+        // 4. COLA
+        const tailLen = SUB_RADIUS * 1.5;
+        // CylinderGeometry(RadioTop, RadioBottom...) -> Top es Y+, Bottom es Y-
+        const tailGeo = new THREE.CylinderGeometry(SUB_RADIUS, 0.5, tailLen, SEGMENTS);
+        const tail = new THREE.Mesh(tailGeo, matStructure);
+        
+        // FIX SECUNDARIO: Rotación positiva para que la parte ancha (Top) apunte hacia el casco (+Z relativo) 
+        // y la parte estrecha hacia atrás (-Z relativo).
+        tail.rotation.x = Math.PI / 2; 
+        
+        tail.position.z = -(hullLen / 2 + tailLen / 2) + 0.05; 
+        subGroup.add(tail);
+
+        // 5. PROPULSIÓN
+        const propGroup = new THREE.Group();
+        propGroup.position.set(0, 0, -(hullLen/2 + tailLen));
+        subGroup.add(propGroup);
+
+        const hubGeo = new THREE.SphereGeometry(0.3, 16, 16);
+        const propHub = new THREE.Mesh(hubGeo, matDetail);
+        propGroup.add(propHub);
+
+        const bladeGeo = new THREE.BoxGeometry(0.1, 1.2, 0.2);
+        for(let i=0; i<3; i++) { 
+            const blade = new THREE.Mesh(bladeGeo, matDetail);
+            blade.rotation.z = (Math.PI * 2 / 3) * i; 
+            blade.position.z = 0.2;
+            blade.rotation.x = 0.2;
+            propHub.add(blade);
+        }
+
+        const tailFinGeo = new THREE.BoxGeometry(0.1, 2.0, 1.5);
+        for(let i=0; i<4; i++){
+            const fin = new THREE.Mesh(tailFinGeo, matStructure);
+            fin.rotation.z = (Math.PI/4) + (Math.PI/2 * i);
+            fin.position.z = -tailLen * 0.5;
+            const tip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 1.52), matDetail);
+            tip.position.y = 0.9;
+            fin.add(tip);
+            tail.add(fin);
+        }
+
+        // 6. VELA
+        const sailGroup = new THREE.Group();
+        sailGroup.position.set(0, SUB_RADIUS * 0.8, hullLen * 0.2);
+        subGroup.add(sailGroup);
+
+        const sailGeo = new THREE.BoxGeometry(1.5, 2.0, 2.5);
+        const sail = new THREE.Mesh(sailGeo, matStructure);
+        sail.position.y = 0.5;
+        const sPos = sailGeo.attributes.position;
+        for(let i=0; i<sPos.count; i++){
+            if(sPos.getY(i) > 0) sPos.setX(i, sPos.getX(i) * 0.5);
+            if(sPos.getZ(i) > 0) sPos.setZ(i, sPos.getZ(i) * 0.6);
+        }
+        sailGeo.computeVertexNormals();
+        sailGroup.add(sail);
+
+        const peri = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.5), matDetail);
+        peri.position.set(0, 1.5, 0);
+        sailGroup.add(peri);
+
+        // 7. SISTEMAS DE PARTÍCULAS
+        const jetCount = 2000;
+        const jetGeo = new THREE.BufferGeometry();
+        const jetPos = new Float32Array(jetCount * 3);
+        const jetVel = new Float32Array(jetCount); 
+        
+        for(let i=0; i<jetCount; i++) jetPos[i*3+1] = -1000; 
+        jetGeo.setAttribute('position', new THREE.BufferAttribute(jetPos, 3));
+        
+        const jetMat = new THREE.PointsMaterial({ 
+            color: 0x4fc3f7, 
+            size: 0.15, 
+            transparent: true, 
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending 
+        });
+        const jetSystem = new THREE.Points(jetGeo, jetMat);
+        subGroup.add(jetSystem);
+
+        const agitationCount = 1000;
+        const agitationGeo = new THREE.BufferGeometry();
+        const agitationPos = new Float32Array(agitationCount * 3);
+        for(let i=0; i<agitationCount; i++) agitationPos[i*3+1] = -1000;
+        agitationGeo.setAttribute('position', new THREE.BufferAttribute(agitationPos, 3));
+
+        const agitationMat = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.12,
+            transparent: true,
+            opacity: 0.9
+        });
+        const agitationSystem = new THREE.Points(agitationGeo, agitationMat);
+        subGroup.add(agitationSystem);
+
+        const bubblesCount = 400; 
+        const bubblesGeo = new THREE.BufferGeometry();
+        const bubblesPos = new Float32Array(bubblesCount * 3);
+        for(let i=0; i<bubblesCount*3; i++) bubblesPos[i] = 0;
+        bubblesGeo.setAttribute('position', new THREE.BufferAttribute(bubblesPos, 3));
+        const bubblesMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, transparent: true, opacity: 0.9 }); 
+        const bubblesSystem = new THREE.Points(bubblesGeo, bubblesMat);
+        scene.add(bubblesSystem);
+        bubblesSystem.visible = false;
+
+        // 8. VECTORES DE FUERZA (UI 3D)
+        function createLabelSprite(text, color) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 256; canvas.height = 128;
+            ctx.fillStyle = color;
+            ctx.font = 'bold 40px Arial';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = "black";
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText(text, 128, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(4, 2, 1);
+            return sprite;
+        }
+
+        const arrowBuoyancy = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 2, 0), 5, 0x00e676);
+        subGroup.add(arrowBuoyancy);
+        const labelBuoyancy = createLabelSprite("Empuje (E)", "#00e676");
+        labelBuoyancy.position.set(0, 6, 0);
+        subGroup.add(labelBuoyancy);
+
+        const arrowWeight = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, -2, 0), 5, 0xff1744);
+        subGroup.add(arrowWeight);
+        const labelWeight = createLabelSprite("Peso (W)", "#ff1744");
+        labelWeight.position.set(0, -6, 0);
+        subGroup.add(labelWeight);
+
+        // --- FUNCIONES LÓGICAS (DEFINIDAS ANTES DEL BUCLE Y GUI) ---
+        
+        let fillIntensity = 0;
+        let currentJetIdx = 0;
+        let currentAgitIdx = 0;
+
+        // Definir funciones que serán usadas por la GUI y el loop
+        
+        function updateBallastVisuals() {
+            // Placeholder para evitar referencias circulares iniciales
+        }
+
+        // Definición del objeto de control PRIMERO
+        const controlParams = {
+            valvulaLastre: 0, 
+            emerger: function() {
+                let interval = setInterval(() => {
+                    if(controlParams.valvulaLastre > 0) {
+                        controlParams.valvulaLastre -= 2;
+                        if(controlParams.valvulaLastre < 0) controlParams.valvulaLastre = 0;
+                        
+                        // Llamada segura
+                        updateBallastVisualsReal(); 
+                        spawnBubbles(subGroup.position);
+                    } else {
+                        clearInterval(interval);
+                        bubblesSystem.visible = false;
+                    }
+                }, 20);
+            },
+            reset: function() {
+                state.depth = 0;
+                state.velocity = 0;
+                subGroup.position.y = 0;
+                controlParams.valvulaLastre = 0;
+                state.isImploded = false;
+                
+                updateBallastVisualsReal();
+                subGroup.scale.set(1,1,1); 
+
+                // Reiniciar la cámara a la superficie
+                if (window.innerWidth < 768) {
+                    camera.position.set(35, 8, 10); 
+                } else {
+                    camera.position.set(26, 6, 5);
+                }
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        };
+
+        // Implementación real de la actualización visual
+        function updateBallastVisualsReal() {
+            const currentLevel = controlParams.valvulaLastre / 100;
+            
+            if (currentLevel > state.lastBallastLevel) {
+                fillIntensity = 0.8; 
+            } else {
+                fillIntensity = 0; 
+            }
+
+            state.ballastLevel = currentLevel;
+            state.lastBallastLevel = currentLevel;
+            
+            waterFrontMesh.scale.set(1, 1, Math.max(0.01, state.ballastLevel)); 
+            waterBackMesh.scale.set(1, 1, Math.max(0.01, state.ballastLevel));
+        }
+
+        function updateBallastEffects() {
+            const jetPositions = jetSystem.geometry.attributes.position.array;
+            const agitPositions = agitationSystem.geometry.attributes.position.array;
+            const waterLevelY = -SUB_RADIUS * 0.6 + (SUB_RADIUS * 1.2 * state.ballastLevel); 
+
+            if (fillIntensity > 0.01) {
+                fillIntensity -= 0.02; 
+                
+                let particlesToSpawn = 40; 
+                for(let i=0; i<particlesToSpawn; i++) {
+                    const idx = currentJetIdx;
+                    currentJetIdx = (currentJetIdx + 1) % jetCount;
+
+                    const isFront = Math.random() > 0.5;
+                    const zBase = isFront ? hullLen * 0.25 : -hullLen * 0.25; // Use new hullLen
+                    
+                    jetPositions[idx*3] = (Math.random() - 0.5) * 0.4; 
+                    jetPositions[idx*3+1] = SUB_RADIUS * 0.5; 
+                    jetPositions[idx*3+2] = zBase + (Math.random() - 0.5) * 0.4; 
+                    
+                    jetVel[idx] = -0.2 - Math.random() * 0.1; 
+                }
+            }
+
+            for(let i=0; i<jetCount; i++) {
+                if(jetPositions[i*3+1] > -500) { 
+                    jetVel[i] -= 0.02; 
+                    jetPositions[i*3+1] += jetVel[i];
+                    
+                    if(jetPositions[i*3+1] < waterLevelY) {
+                        const agitIdx = currentAgitIdx;
+                        currentAgitIdx = (currentAgitIdx + 1) % agitationCount;
+                        
+                        agitPositions[agitIdx*3] = jetPositions[i*3];
+                        agitPositions[agitIdx*3+1] = waterLevelY;
+                        agitPositions[agitIdx*3+2] = jetPositions[i*3+2];
+                        
+                        jetPositions[i*3+1] = -1000; 
+                    }
+                }
+            }
+
+            for(let i=0; i<agitationCount; i++) {
+                if(agitPositions[i*3+1] > -500) {
+                    agitPositions[i*3+1] += 0.02; 
+                    agitPositions[i*3] += (Math.random()-0.5)*0.05; 
+                    // Corrección aquí: usar 'i' en lugar de 'agitIdx'
+                    agitPositions[i*3+2] += (Math.random()-0.5)*0.05; 
+
+                    if(Math.random() > 0.9) agitPositions[i*3+1] = -1000;
+                }
+            }
+
+            jetSystem.geometry.attributes.position.needsUpdate = true;
+            agitationSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function spawnBubbles(pos) {
+            bubblesSystem.visible = true;
+            const positions = bubblesSystem.geometry.attributes.position.array;
+            for(let i=0; i < 15; i++) { 
+                const idx = Math.floor(Math.random() * bubblesCount);
+                positions[idx*3] = pos.x + (Math.random()-0.5)*2;
+                positions[idx*3+1] = pos.y;
+                positions[idx*3+2] = pos.z + (Math.random()-0.5)*8;
+            }
+            bubblesSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function animateBubbles() {
+            if(!bubblesSystem.visible) return;
+            const positions = bubblesSystem.geometry.attributes.position.array;
+            for(let i=0; i < bubblesCount; i++) {
+                if(positions[i*3+1] > state.depth + 10) { 
+                    positions[i*3+1] = -1000; 
+                } else if(positions[i*3+1] > -500) {
+                    positions[i*3+1] += 0.1 + Math.random() * 0.1;
+                    positions[i*3] += Math.sin(positions[i*3+1]*0.5) * 0.05;
+                }
+            }
+            bubblesSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        // --- GUI CONFIG ---
+        const gui = new GUI({ container: document.getElementById('controls-container'), width: 300 });
+        gui.title("PANEL DE CONTROL");
+        
+        gui.add(controlParams, 'valvulaLastre', 0, 100).name('Válvula Lastre (%)').listen().onChange(updateBallastVisualsReal);
+        
+        const actionsFolder = gui.addFolder('Acciones de Emergencia');
+        actionsFolder.add(controlParams, 'emerger').name('EXPULSAR LASTRE');
+        actionsFolder.add(controlParams, 'reset').name('REINICIAR SISTEMA');
+        actionsFolder.open();
+
+        // --- DASHBOARD LOGIC ---
+        const dashToggle = document.getElementById('dash-toggle');
+        const dashboard = document.getElementById('dashboard');
+        const toggleIcon = document.querySelector('.toggle-icon');
+        
+        dashToggle.addEventListener('click', () => {
+            dashboard.classList.toggle('collapsed');
+            if(dashboard.classList.contains('collapsed')) {
+                toggleIcon.textContent = '+';
+            } else {
+                toggleIcon.textContent = '−';
+            }
+        });
+
+        const dispDepth = document.getElementById('disp-depth');
+        const dispPressure = document.getElementById('disp-pressure');
+        const dispVolume = document.getElementById('disp-volume');
+        const dispDensity = document.getElementById('disp-density');
+        const dispStatus = document.getElementById('disp-status');
+        const alertBox = document.getElementById('alert-implosion');
+
+        // --- SISTEMA DE PARTÍCULAS DE FRICCIÓN (Hull Turbulence) ---
+        // Visualización de micro-burbujas/suciedad agitada por el casco
+        let hullTurbulenceSystem;
+        const turbulenceCount = 80;
+        const turbulenceVel = new Float32Array(turbulenceCount); // Velocidad individual
+
+        function createHullTurbulence() {
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(turbulenceCount * 3);
+            
+            for(let i=0; i<turbulenceCount; i++) {
+                // Distribución cilíndrica alrededor del casco (que está alineado en Z)
+                const angle = Math.random() * Math.PI * 2;
+                // Radio ligeramente mayor al del submarino para que floten alrededor
+                const radius = SUB_RADIUS * 1.2 + (Math.random() * 0.5);
+                const z = (Math.random() - 0.5) * SUB_LENGTH; // A lo largo del casco
+                
+                // En el espacio local de subGroup, el casco va a lo largo de Z.
+                // X e Y forman la sección transversal.
+                pos[i*3] = Math.cos(angle) * radius;     // X
+                pos[i*3+1] = Math.sin(angle) * radius;   // Y (Arriba local)
+                pos[i*3+2] = z;                          // Z
+                
+                turbulenceVel[i] = 0.005 + Math.random() * 0.01; // Flotación lenta
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            
+            const mat = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.08,
+                transparent: true,
+                opacity: 0.3,
+                sizeAttenuation: true,
+                depthWrite: false // Para que no bloqueen otras transparencias
+            });
+            
+            hullTurbulenceSystem = new THREE.Points(geo, mat);
+            subGroup.add(hullTurbulenceSystem); // Se mueve con el submarino
+        }
+
+        createHullTurbulence();
+
+        // --- PHYSICS LOOP ---
+        function updatePhysics() {
+            if(state.isImploded) return;
+
+            // 1. Calcular Masa Total
+            const ballastMass = (state.ballastLevel) * MAX_BALLAST_MASS;
+            const totalMass = BASE_MASS + ballastMass;
+
+            // 2. Calcular Volumen Actual (Compresión del casco)
+            const pressure = P_ATM + RHO_AGUA * G * Math.abs(state.depth);
+            const pressureDiff = Math.max(0, pressure - P_ATM);
+            
+            // Reducción de volumen por presión
+            const volumeReduction = BASE_VOLUME * pressureDiff * HULL_COMPRESSION_FACTOR / 1e6; 
+            state.hullVolume = Math.max(BASE_VOLUME * 0.5, BASE_VOLUME - volumeReduction);
+
+            // 3. Fuerzas
+            const weight = totalMass * G; 
+            const buoyancy = state.hullVolume * RHO_AGUA * G; 
+            const netForce = weight - buoyancy; 
+
+            // Drag (Resistencia del agua)
+            const dragCoeff = 850; 
+            const dragForce = -Math.sign(state.velocity) * dragCoeff * state.velocity * state.velocity;
+
+            const totalForceY = -netForce + dragForce; 
+            
+            // F = ma
+            const acceleration = totalForceY / totalMass;
+
+            state.velocity += acceleration * 0.016; // dt ~ 60fps
+            state.depth += -state.velocity * 0.016; 
+
+            // Límites de profundidad
+            if (state.depth < 0) {
+                state.depth = 0;
+                state.velocity = 0;
+            } else if (state.depth > 600) {
+                state.velocity = 0;
+                state.depth = 600;
+            }
+
+            // --- ACTUALIZACIÓN DE POSICIÓN FÍSICA Y CÁMARA (DESACOPLADA) ---
+            // 1. Calculamos la posición física "pura" del submarino
+            const currentPhysicsY = -state.depth;
+            
+            // 2. Movemos la cámara SOLO basándonos en el cambio de profundidad física
+            // Esto ignora cualquier "bobbing" visual que añadamos después
+            const cameraDelta = currentPhysicsY - state.lastPhysicsY;
+            camera.position.y += cameraDelta;
+            controls.target.y = currentPhysicsY; // El target siempre es el centro físico
+            
+            // 3. Actualizamos la posición base del grupo (se sobreescribirá visualmente en animate si hay bobbing)
+            subGroup.position.y = currentPhysicsY;
+            
+            // 4. Guardamos el estado para el siguiente frame
+            state.lastPhysicsY = currentPhysicsY;
+
+            // Colapso / Implosión
+            if (pressureDiff > 55 * 101325) { 
+                state.isImploded = true;
+                subGroup.scale.set(0.2, 1, 0.2); 
+                alertBox.innerHTML = "¡FALLO CATASTRÓFICO DEL CASCO!";
+                alertBox.style.display = "block";
+            } else if (pressureDiff > 45 * 101325) {
+                alertBox.style.display = "block";
+            } else {
+                alertBox.style.display = "none";
+            }
+
+            // Actualizar Vectores
+            const forceScale = 0.00005;
+            arrowBuoyancy.setLength(buoyancy * forceScale);
+            arrowWeight.setLength(weight * forceScale);
+            
+            labelBuoyancy.position.y = (buoyancy * forceScale) + 2;
+            labelWeight.position.y = -(weight * forceScale) - 2;
+
+            // Update UI
+            dispDepth.textContent = state.depth.toFixed(1) + " m";
+            dispPressure.textContent = (pressure / 101325).toFixed(2) + " atm";
+            
+            const volPct = (state.hullVolume / BASE_VOLUME) * 100;
+            dispVolume.textContent = volPct.toFixed(1) + "%";
+            
+            const currentDensity = totalMass / state.hullVolume;
+            dispDensity.textContent = currentDensity.toFixed(0) + " kg/m³";
+
+            if(state.isImploded) dispStatus.textContent = "DESTRUIDO";
+            else if(state.velocity < -0.1) { dispStatus.textContent = "HUNDIENDO"; dispStatus.style.color = "#ff1744"; }
+            else if(state.velocity > 0.1) { dispStatus.textContent =  "EMERGIENDO"; dispStatus.style.color = "#00e676"; }
+            else { dispStatus.textContent = "ESTABLE"; dispStatus.style.color = "#ffeb3b"; }
+        }
+
+        // --- MAIN LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001; 
+
+            // 1. Calcular Física Base (Y mover cámara)
+            updatePhysics();
+
+            // 2. Efecto VFX: Rebote Hidrodinámico "Poquito" (Variable Bounce)
+            // Se aplica DESPUÉS de updatePhysics para que sea puramente visual y no mueva la cámara
+            if (!state.isImploded) {
+                // Limpiar rotaciones anteriores
+                subGroup.rotation.set(0, 0, 0);
+                subGroup.position.x = 0;
+                subGroup.position.z = 0;
+
+                // Desplazamiento vertical visual suave (Marea)
+                // Math.sin(time * 2.0) * 0.1 -> Frecuencia moderada, amplitud baja (10cm)
+                const hydrodynamicBounce = Math.sin(time * 2.0) * 0.1;
+                
+                // Sumamos a la posición física actual
+                subGroup.position.y += hydrodynamicBounce;
+            }
+
+            // 3. Animación de Turbulencia del Casco
+            if (hullTurbulenceSystem) {
+                const positions = hullTurbulenceSystem.geometry.attributes.position.array;
+                
+                for(let i = 0; i < turbulenceCount; i++) {
+                    positions[i*3+1] += turbulenceVel[i];
+                    positions[i*3] += (Math.random() - 0.5) * 0.005;
+                    positions[i*3+2] += (Math.random() - 0.5) * 0.005;
+
+                    if (positions[i*3+1] > SUB_RADIUS * 1.5) {
+                        positions[i*3+1] = -SUB_RADIUS * 1.5;
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = SUB_RADIUS * 1.2 + (Math.random() * 0.5);
+                        positions[i*3] = Math.cos(angle) * radius;
+                        positions[i*3+2] = (Math.random() - 0.5) * SUB_LENGTH;
+                    }
+                }
+                hullTurbulenceSystem.geometry.attributes.position.needsUpdate = true;
+            }
+
+            updateBallastEffects();
+            animateBubbles();
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Remover pantalla de carga
+        document.getElementById('loading').style.display = 'none';
+
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            setInitialCamera();
+        });
+
+    </script>
+</body>
+</html>

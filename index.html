@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Level VIP Barber Shop - Sistema de Citas Premium</title>
+  
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Estilos Visuales Premium (Idénticos a barber_v2) -->
+  <style>
+    :root {
+      --color-gold: #F2C94C;
+      --color-gold-dark: #d4af37;
+      --color-dark-bg: #050505;
+    }
+
+    body {
+      background-color: var(--color-dark-bg);
+      color: white;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-image: 
+        radial-gradient(circle at top right, rgba(242, 201, 76, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.02) 0%, transparent 40%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #050505; }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #F2C94C 0%, #d4af37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gold-bg {
+      background: linear-gradient(135deg, #F2C94C 0%, #d4af37 100%);
+    }
+
+    .gold-glow {
+      box-shadow: 0 8px 30px rgba(242, 201, 76, 0.35);
+    }
+
+    /* Animaciones fluidas de navegación entre pantallas */
+    .screen-enter { 
+      animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+    }
+    .screen-exit { 
+      animation: slideOutLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideOutLeft {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(-35%); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(25px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      opacity: 0;
+      animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-down { 
+      animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+    }
+  </style>
+</head>
+<body class="selection:bg-[#F2C94C] selection:text-black">
+
+  <!-- ======================================================== -->
+  <!-- PANTALLA 1: CATÁLOGO DE SERVICIOS (screen-services)       -->
+  <!-- ======================================================== -->
+  <div id="screen-services" class="min-h-screen pb-16 w-full absolute top-0 left-0">
+    <!-- Header Principal -->
+    <header class="sticky top-0 z-50 bg-[#050505]/85 backdrop-blur-xl border-b border-white/5 py-4 px-4 md:px-6 shadow-sm">
+      <div class="max-w-6xl mx-auto flex items-center justify-between relative">
+        
+        <!-- Área Izquierda: Perfil / Usuario -->
+        <div class="flex-1 flex justify-start z-10">
+          <button id="btn-profile" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#F2C94C] to-[#d4af37] flex items-center justify-center text-black font-black text-lg shadow-lg hover:scale-105 transition-transform border border-[#F2C94C]/50">
+            <span id="top-bar-avatar">U</span>
+          </button>
+        </div>
+
+        <!-- Área Central: Logo y Nombre Oficial -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none gap-2 md:gap-3">
+          <img src="https://stbeunikpremproduction.blob.core.windows.net/avatar-pictures/f84928af-e75d-4c4e-9b9d-1e7b2d4a7520.png" 
+               alt="Level VIP Barber Shop Logo" 
+               class="h-10 w-10 md:h-14 md:w-14 object-contain drop-shadow-[0_0_10px_rgba(242,201,76,0.3)]">
+          <div class="flex flex-col text-left">
+            <h1 class="text-xl md:text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F2C94C] to-[#d4af37] leading-none mb-0.5 md:mb-1">
+              LEVEL
+            </h1>
+            <p class="text-[0.5rem] md:text-[0.65rem] text-gray-300 uppercase tracking-[0.25em] font-semibold">
+              VIP Barber Shop
+            </p>
+          </div>
+        </div>
+
+        <!-- Área Derecha: Mis Citas -->
+        <div class="flex-1 flex justify-end z-10">
+          <button id="btn-appointments" class="text-[0.7rem] md:text-sm font-semibold bg-white/5 border border-white/10 px-3 md:px-4 py-2 rounded-full hover:bg-white/10 transition-colors flex items-center gap-1.5 md:gap-2">
+            <i data-lucide="calendar-check" class="w-3.5 h-3.5 md:w-4 md:h-4 text-[#F2C94C]"></i>
+            <span class="hidden sm:inline">Mis</span> Citas
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-5 mt-8 md:mt-12">
+      <!-- Saludo Dinámico -->
+      <div class="mb-8 md:mb-12 animate-fade-up" style="animation-delay: 0s;">
+        <h2 class="text-2xl md:text-3xl font-light text-gray-400 mb-1">Bienvenido,</h2>
+        <h3 class="text-3xl md:text-5xl font-bold text-white tracking-wide">¿Qué estilo buscas hoy?</h3>
+      </div>
+
+      <!-- Contenedor Dinámico de Servicios -->
+      <section>
+        <div id="services-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pb-8">
+          <!-- Renderizado dinámico -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- PANTALLA 2: AGENDAMIENTO PASO A PASO (screen-booking)     -->
+  <!-- ======================================================== -->
+  <div id="screen-booking" class="hidden min-h-screen pb-36 w-full absolute top-0 left-0 bg-[#050505] z-10">
+    <header class="sticky top-0 z-50 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 py-4 px-5 shadow-sm">
+      <div class="max-w-3xl mx-auto flex items-center justify-between">
+        <button id="btn-back-booking" class="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors text-gray-300">
+          <i data-lucide="arrow-left" class="w-6 h-6"></i>
+        </button>
+        <div class="text-center flex-1 pr-6">
+          <h2 class="text-lg font-bold tracking-widest text-[#F2C94C] uppercase text-sm">Agendar Cita</h2>
+          <p id="header-service-name" class="text-xs text-gray-400 truncate px-4"></p>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 mt-8 space-y-10 md:space-y-14">
+      <!-- Paso 1: Barbero -->
+      <section id="step-barber">
+        <div class="flex items-center gap-2 mb-4 md:mb-6">
+          <div class="bg-[#F2C94C]/10 p-2 rounded-lg">
+            <i data-lucide="user" class="w-5 h-5 text-[#F2C94C]"></i>
+          </div>
+          <h3 class="text-xl md:text-2xl font-semibold tracking-wide">Elige a tu Barbero</h3>
+        </div>
+        <div id="barbers-container" class="flex overflow-x-auto md:flex-wrap pb-4 gap-4 hide-scrollbar snap-x">
+          <!-- Renderizado dinámico -->
+        </div>
+      </section>
+
+      <!-- Paso 2: Fecha Dinámica -->
+      <section id="step-date" class="hidden">
+        <div class="flex items-center justify-between mb-4 md:mb-6">
+          <div class="flex items-center gap-2">
+            <div class="bg-[#F2C94C]/10 p-2 rounded-lg">
+              <i data-lucide="calendar" class="w-5 h-5 text-[#F2C94C]"></i>
+            </div>
+            <h3 class="text-xl md:text-2xl font-semibold tracking-wide">Selecciona el Día</h3>
+          </div>
+          <span class="text-xs text-[#F2C94C] font-semibold uppercase tracking-wider">Próximos 14 días</span>
+        </div>
+        <div id="days-container" class="flex overflow-x-auto pb-4 gap-3 hide-scrollbar snap-x">
+          <!-- Renderizado dinámico -->
+        </div>
+      </section>
+
+      <!-- Paso 3: Horarios Disponibles -->
+      <section id="step-time" class="hidden">
+        <div class="flex items-center justify-between mb-4 md:mb-6">
+          <div class="flex items-center gap-2">
+            <div class="bg-[#F2C94C]/10 p-2 rounded-lg">
+              <i data-lucide="clock" class="w-5 h-5 text-[#F2C94C]"></i>
+            </div>
+            <h3 class="text-xl md:text-2xl font-semibold tracking-wide">Hora Disponible</h3>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-gray-400">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Libre</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400"></span> Ocupado</span>
+          </div>
+        </div>
+
+        <div id="times-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+          <!-- Renderizado dinámico -->
+        </div>
+      </section>
+
+      <!-- Paso 4: Datos de Contacto del Cliente -->
+      <section id="step-client-data" class="hidden bg-white/5 border border-white/5 p-6 rounded-3xl space-y-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="bg-[#F2C94C]/10 p-2 rounded-lg">
+            <i data-lucide="contact" class="w-5 h-5 text-[#F2C94C]"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Tus Datos para la Confirmación</h3>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block text-gray-400 font-semibold mb-1">Nombre Completo *</label>
+            <input type="text" id="client-input-name" placeholder="Ej. Juan Silva" class="w-full bg-[#111] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-[#F2C94C]">
+          </div>
+          <div>
+            <label class="block text-gray-400 font-semibold mb-1">WhatsApp / Celular *</label>
+            <input type="tel" id="client-input-phone" placeholder="+57 300 000 0000" class="w-full bg-[#111] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-[#F2C94C]">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-gray-400 font-semibold mb-1">Correo Electrónico (Gmail) *</label>
+            <input type="email" id="client-input-email" placeholder="tu-correo@gmail.com" class="w-full bg-[#111] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-[#F2C94C]">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-gray-400 font-semibold mb-1">Notas especiales (Opcional)</label>
+            <input type="text" id="client-input-notes" placeholder="Ej. Corte bajo, barba perfilada con navaja..." class="w-full bg-[#111] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-[#F2C94C]">
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Botón Flotante de Confirmación -->
+    <div id="booking-footer" class="fixed bottom-0 left-0 w-full p-5 bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent pt-12 transform translate-y-full transition-transform duration-300 pointer-events-none">
+      <button onclick="window.appConfirmBooking()" class="w-full max-w-3xl mx-auto flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-[#F2C94C] to-[#d4af37] text-black shadow-[0_8px_30px_rgba(242,201,76,0.4)] hover:scale-[1.02] border-none pointer-events-auto">
+        <span>Confirmar Reserva</span>
+        <i data-lucide="check" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- PANTALLA 3: MIS CITAS (screen-appointments)               -->
+  <!-- ======================================================== -->
+  <div id="screen-appointments" class="hidden min-h-screen pb-16 w-full absolute top-0 left-0 bg-[#050505] z-10">
+    <header class="sticky top-0 z-50 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 py-4 px-5 shadow-sm">
+      <div class="max-w-3xl mx-auto flex items-center">
+        <button id="btn-back-appointments" class="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors text-gray-300">
+          <i data-lucide="arrow-left" class="w-6 h-6"></i>
+        </button>
+        <div class="text-center flex-1 pr-6">
+          <h2 class="text-lg font-bold tracking-widest text-[#F2C94C] uppercase text-sm">Mis Citas</h2>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 mt-8">
+      <!-- Pestañas (Tabs) -->
+      <div class="flex bg-white/5 p-1 rounded-xl mb-8 mx-auto max-w-sm border border-white/10 relative">
+        <button id="tab-upcoming" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-[#F2C94C] text-black transition-all duration-300 z-10 shadow-[0_2px_10px_rgba(242,201,76,0.3)]">Próximas</button>
+        <button id="tab-history" class="flex-1 py-2 text-sm font-semibold rounded-lg text-gray-400 hover:text-white transition-all duration-300 z-10">Historial</button>
+      </div>
+
+      <!-- Contenedor de la Lista -->
+      <div id="appointments-list" class="space-y-5 pb-8">
+        <!-- Renderizado dinámico -->
+      </div>
+
+      <!-- Estado Vacío -->
+      <div id="appointments-empty" class="hidden text-center mt-16 animate-fade-up">
+        <div class="bg-white/5 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-inner">
+          <i data-lucide="calendar-x-2" class="w-10 h-10 text-gray-400"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2">Sin citas</h3>
+        <p id="empty-state-text" class="text-gray-400 text-sm mb-8">Aún no tienes reservas activas con nuestros barberos.</p>
+        <button id="btn-empty-book" class="px-8 py-3.5 rounded-full bg-white/5 hover:bg-white/10 text-white font-semibold transition-all border border-white/10 hover:border-[#F2C94C]/50 hover:text-[#F2C94C]">
+          Explorar Servicios
+        </button>
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- PANTALLA 4: MI PERFIL (screen-profile)                   -->
+  <!-- ======================================================== -->
+  <div id="screen-profile" class="hidden min-h-screen pb-16 w-full absolute top-0 left-0 bg-[#050505] z-10">
+    <header class="sticky top-0 z-50 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 py-4 px-5 shadow-sm">
+      <div class="max-w-3xl mx-auto flex items-center">
+        <button id="btn-back-profile" class="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors text-gray-300">
+          <i data-lucide="arrow-left" class="w-6 h-6"></i>
+        </button>
+        <div class="text-center flex-1 pr-6">
+          <h2 class="text-lg font-bold tracking-widest text-[#F2C94C] uppercase text-sm">Mi Perfil</h2>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 mt-10">
+      <div class="text-center mb-8">
+        <div id="profile-avatar-large" class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-[#F2C94C] to-[#d4af37] flex items-center justify-center text-black font-black text-4xl mb-4 shadow-[0_0_30px_rgba(242,201,76,0.2)]">
+          U
+        </div>
+        <h3 id="profile-display-name" class="text-2xl font-bold text-white tracking-wide">Usuario VIP</h3>
+        <span id="profile-display-level" class="text-xs uppercase tracking-widest font-semibold px-3 py-1 rounded-full bg-[#F2C94C]/10 text-[#F2C94C] border border-[#F2C94C]/20 inline-block mt-2">
+          Miembro VIP Gold
+        </span>
+      </div>
+
+      <form id="form-profile" class="bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 space-y-6">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Nombre Completo</label>
+          <input type="text" id="profile-name-input" class="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F2C94C]">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Teléfono WhatsApp</label>
+          <input type="tel" id="profile-phone-input" class="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F2C94C]">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Correo Electrónico (Gmail)</label>
+          <input type="email" id="profile-email-input" class="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#F2C94C]">
+        </div>
+
+        <button type="submit" class="w-full py-4 rounded-xl font-bold text-base transition-all duration-300 bg-gradient-to-r from-[#F2C94C] to-[#d4af37] text-black shadow-[0_4px_20px_rgba(242,201,76,0.3)] hover:scale-[1.01]">
+          Guardar Cambios
+        </button>
+      </form>
+
+      <!-- Botón de acceso a Staff / Administrador -->
+      <div class="mt-8 text-center border-t border-white/10 pt-6">
+        <button id="btn-admin-access" class="text-xs text-gray-500 hover:text-[#F2C94C] flex items-center justify-center gap-2 mx-auto transition-colors">
+          <i data-lucide="shield" class="w-4 h-4"></i> Acceso a Panel Staff / Barberos
+        </button>
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- PANTALLA 5: PANEL STAFF / BARBERO (screen-admin)         -->
+  <!-- ======================================================== -->
+  <div id="screen-admin" class="hidden min-h-screen pb-16 w-full absolute top-0 left-0 bg-[#050505] z-10">
+    <header class="sticky top-0 z-50 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 py-4 px-5 shadow-sm">
+      <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <button id="btn-back-admin" class="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors text-gray-300">
+          <i data-lucide="arrow-left" class="w-6 h-6"></i>
+        </button>
+        <div class="text-center flex-1 pr-6">
+          <h2 class="text-lg font-bold tracking-widest text-[#F2C94C] uppercase text-sm">Panel Staff / Gestión de Citas</h2>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-5 mt-8 space-y-8">
+      
+      <!-- Métricas del Negocio -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white/5 border border-white/5 p-5 rounded-2xl">
+          <span class="text-xs text-gray-400">Total Citas</span>
+          <p id="admin-stat-total" class="text-3xl font-extrabold text-white mt-1">0</p>
+        </div>
+        <div class="bg-white/5 border border-white/5 p-5 rounded-2xl">
+          <span class="text-xs text-gray-400">Citas Hoy</span>
+          <p id="admin-stat-today" class="text-3xl font-extrabold text-emerald-400 mt-1">0</p>
+        </div>
+        <div class="bg-white/5 border border-white/5 p-5 rounded-2xl">
+          <span class="text-xs text-gray-400">Pendientes</span>
+          <p id="admin-stat-pending" class="text-3xl font-extrabold text-[#F2C94C] mt-1">0</p>
+        </div>
+        <div class="bg-white/5 border border-white/5 p-5 rounded-2xl">
+          <span class="text-xs text-gray-400">Ingresos Proyectados</span>
+          <p id="admin-stat-revenue" class="text-3xl font-extrabold text-[#F2C94C] mt-1">$0</p>
+        </div>
+      </div>
+
+      <!-- Filtros de la Agenda -->
+      <div class="bg-white/5 border border-white/5 p-5 rounded-3xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <div>
+              <label class="block text-[11px] text-gray-400 mb-1">Barbero</label>
+              <select id="admin-filter-barber" class="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="ALL">Todos los Barberos</option>
+                <option value="1">Alejandro (Master Barber)</option>
+                <option value="2">David (Barber VIP)</option>
+                <option value="3">Camilo (Especialista)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-gray-400 mb-1">Estado</label>
+              <select id="admin-filter-status" class="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="ALL">Todos los Estados</option>
+                <option value="CONFIRMADA">Confirmadas</option>
+                <option value="PENDIENTE">Pendientes</option>
+                <option value="COMPLETADA">Completadas</option>
+                <option value="CANCELADA">Canceladas</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-gray-400 mb-1">Fecha</label>
+              <input type="date" id="admin-filter-date" class="bg-[#111] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Citas -->
+        <div class="overflow-x-auto pt-2">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-gray-400 uppercase tracking-wider text-[10px]">
+                <th class="py-3 px-3">Código</th>
+                <th class="py-3 px-3">Cliente</th>
+                <th class="py-3 px-3">Barbero</th>
+                <th class="py-3 px-3">Servicio</th>
+                <th class="py-3 px-3">Fecha y Hora</th>
+                <th class="py-3 px-3">Total</th>
+                <th class="py-3 px-3">Estado</th>
+                <th class="py-3 px-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body" class="divide-y divide-white/5">
+              <!-- Renderizado dinámico -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CONFIRMACIÓN EXITOSA (MODAL PREMIUM)              -->
+  <!-- ======================================================== -->
+  <div id="modal-booking-success" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#0a0a0a] border border-[#F2C94C]/40 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 relative shadow-2xl gold-glow animate-fade-up">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
+          <i data-lucide="check-circle" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-white tracking-wide">¡Cita Confirmada!</h3>
+        <p class="text-xs text-gray-400">Tu turno ha quedado programado y registrado.</p>
+        <div class="inline-block px-3 py-1 bg-white/5 rounded-full text-xs font-mono text-[#F2C94C] border border-white/10">
+          Código: <span id="success-code" class="font-bold">LVL-XXXX</span>
+        </div>
+      </div>
+
+      <div class="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2.5 text-xs">
+        <div class="flex justify-between py-1 border-b border-white/5">
+          <span class="text-gray-400">Barbero:</span>
+          <span id="success-barber" class="font-bold text-white"></span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-white/5">
+          <span class="text-gray-400">Servicio:</span>
+          <span id="success-service" class="font-bold text-white"></span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-white/5">
+          <span class="text-gray-400">Fecha y Hora:</span>
+          <span id="success-datetime" class="font-bold text-[#F2C94C]"></span>
+        </div>
+        <div class="flex justify-between py-1">
+          <span class="text-gray-400">Total:</span>
+          <span id="success-total" class="font-bold text-emerald-400 text-sm"></span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <button id="btn-success-wa" class="w-full py-3.5 rounded-xl bg-emerald-500 text-black font-bold text-xs flex items-center justify-center gap-2 hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>Avisar por WhatsApp</span>
+        </button>
+
+        <button id="btn-success-email" class="w-full py-3 rounded-xl bg-white/10 text-white font-semibold text-xs flex items-center justify-center gap-2 hover:bg-white/15 transition-all">
+          <i data-lucide="mail" class="w-4 h-4 text-blue-400"></i>
+          <span>Enviar Confirmación a Gmail</span>
+        </button>
+
+        <button id="btn-success-ics" class="w-full py-2.5 rounded-xl border border-white/10 text-gray-300 font-medium text-xs flex items-center justify-center gap-2 hover:bg-white/5 transition-all">
+          <i data-lucide="calendar" class="w-4 h-4 text-[#F2C94C]"></i>
+          <span>Agregar a Google Calendar (.ics)</span>
+        </button>
+
+        <button onclick="window.appCloseSuccessModal()" class="w-full py-2 text-xs text-gray-500 hover:text-white transition-colors">
+          Cerrar y Ver Mis Citas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT AUTO-CONTENIDO (Compatible con file:// y http) -->
+  <!-- ======================================================== -->
+  <script>
+    // --- 1. CONFIGURACIÓN Y DATOS OFICIALES ---
+    const CONFIG = {
+      shopName: 'Level VIP Barber Shop',
+      whatsappNumber: '573006835915',
+      shopEmail: 'levelbarbershop@gmail.com',
+      timeSlots: [
+        '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
+        '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'
+      ],
+      barbers: [
+        { id: 1, name: 'Alejandro', role: 'Master Barber', img: 'https://i.pravatar.cc/150?img=11' },
+        { id: 2, name: 'David', role: 'Barber VIP', img: 'https://i.pravatar.cc/150?img=68' },
+        { id: 3, name: 'Camilo', role: 'Especialista', img: 'https://i.pravatar.cc/150?img=33' }
+      ],
+      services: [
+        { 
+          id: 1, 
+          name: 'Corte Niño', 
+          price: 25000, 
+          duration: 35,
+          desc: 'Corte de cabello para niños, con paciencia, cuidado y estilo profesional.', 
+          image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4PszUUwdHViEGW3-jeGbe5ehbqk2DbE0M2Q&s',
+          popular: false 
+        },
+        { 
+          id: 2, 
+          name: 'Corte Hombre', 
+          price: 25000, 
+          duration: 40,
+          desc: 'Asesoría de imagen, corte a tijera o máquina y peinado con productos profesionales.', 
+          image: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=600',
+          popular: false 
+        },
+        { 
+          id: 3, 
+          name: 'Corte con Barba', 
+          price: 30000, 
+          duration: 60,
+          desc: 'Servicio completo. Incluye ritual de toalla caliente, perfilado y vapor de ozono.', 
+          image: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=600',
+          popular: false 
+        },
+        { 
+          id: 4, 
+          name: 'Barba', 
+          price: 10000, 
+          duration: 30,
+          desc: 'Alineación precisa, toalla caliente y aplicación de aceites esenciales para hidratar.', 
+          image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600',
+          popular: false 
+        },
+        { 
+          id: 5, 
+          name: 'Corte con Barba y Cejas', 
+          price: 32000, 
+          duration: 75,
+          desc: 'La experiencia total: Corte, barba, cejas y mascarilla de limpieza facial negra.', 
+          image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=600',
+          popular: true 
+        },
+        { 
+          id: 6, 
+          name: 'Corte con Cejas', 
+          price: 27000, 
+          duration: 45,
+          desc: 'Corte impecable de cabello acompañado de un perfilado limpio y detallado de cejas.', 
+          image: 'https://images.unsplash.com/photo-1593702275687-f8b402bf1fb5?auto=format&fit=crop&q=80&w=600',
+          popular: false 
+        },
+        { 
+          id: 7, 
+          name: 'Diseño de Cejas', 
+          price: 10000, 
+          duration: 20,
+          desc: 'Diseño, perfilado y limpieza de cejas para resaltar la mirada y facciones del rostro.', 
+          image: 'https://2356021.fs1.hubspotusercontent-na1.net/hubfs/2356021/linea%20en%20la%20ceja%20hombre%20barberia%202.webp',
+          popular: false 
+        }
+      ]
+    };
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
+
+    // --- 2. CAPA DE PERSISTENCIA (LOCALSTORAGE + COMPATIBILIDAD SUPABASE) ---
+    const DB = {
+      KEY_BOOKINGS: 'level_barbershop_bookings',
+      KEY_PROFILE: 'level_barbershop_profile',
+
+      getBookings() {
+        const raw = localStorage.getItem(this.KEY_BOOKINGS);
+        if (!raw) {
+          const today = new Date().toISOString().split('T')[0];
+          const initial = [
+            {
+              code: 'LVL-4091',
+              clientName: 'Santiago Vélez',
+              clientPhone: '+57 312 890 1234',
+              clientEmail: 'santiago.v@gmail.com',
+              barberId: 1,
+              barberName: 'Alejandro',
+              serviceId: 2,
+              serviceName: 'Corte Hombre',
+              price: 25000,
+              date: today,
+              time: '11:00 AM',
+              status: 'CONFIRMADA',
+              createdAt: new Date().toISOString()
+            },
+            {
+              code: 'LVL-4092',
+              clientName: 'Mateo Cárdenas',
+              clientPhone: '+57 320 555 4321',
+              clientEmail: 'mateo.c@gmail.com',
+              barberId: 2,
+              barberName: 'David',
+              serviceId: 3,
+              serviceName: 'Corte con Barba',
+              price: 30000,
+              date: today,
+              time: '02:00 PM',
+              status: 'PENDIENTE',
+              createdAt: new Date().toISOString()
+            }
+          ];
+          localStorage.setItem(this.KEY_BOOKINGS, JSON.stringify(initial));
+          return initial;
+        }
+        return JSON.parse(raw);
+      },
+
+      saveBooking(booking) {
+        const list = this.getBookings();
+        list.unshift(booking);
+        localStorage.setItem(this.KEY_BOOKINGS, JSON.stringify(list));
+      },
+
+      updateStatus(code, newStatus) {
+        const list = this.getBookings();
+        const idx = list.findIndex(b => b.code === code);
+        if (idx !== -1) {
+          list[idx].status = newStatus;
+          localStorage.setItem(this.KEY_BOOKINGS, JSON.stringify(list));
+        }
+      },
+
+      getOccupiedSlots(barberId, date) {
+        const list = this.getBookings();
+        return list
+          .filter(b => b.date === date && b.status !== 'CANCELADA' && (!barberId || b.barberId == barberId))
+          .map(b => b.time);
+      },
+
+      getProfile() {
+        const raw = localStorage.getItem(this.KEY_PROFILE);
+        return raw ? JSON.parse(raw) : { name: 'Juan Silva', phone: '3006835915', email: 'juan.silva@gmail.com' };
+      },
+
+      saveProfile(prof) {
+        localStorage.setItem(this.KEY_PROFILE, JSON.stringify(prof));
+      }
+    };
+
+    // --- 3. ESTADO GLOBAL DE LA APP ---
+    const state = {
+      currentScreen: 'services',
+      selectedService: null,
+      selectedBarber: null,
+      selectedDate: null,
+      selectedTime: null,
+      occupiedSlots: [],
+      currentAptTab: 'upcoming',
+      userProfile: DB.getProfile(),
+      dynamicDays: []
+    };
+
+    // --- 4. GENERACIÓN DE FECHAS DINÁMICAS (PRÓXIMOS 14 DÍAS) ---
+    function generateDays() {
+      const days = [];
+      const today = new Date();
+      for (let i = 0; i < 14; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+        const dayStr = d.toISOString().split('T')[0];
+        const dayNum = d.getDate();
+        const dayWeek = d.toLocaleDateString('es-ES', { weekday: 'short' });
+        days.push({
+          num: dayNum,
+          abbrev: dayWeek.charAt(0).toUpperCase() + dayWeek.slice(1, 3),
+          fullDate: dayStr,
+          isToday: i === 0
+        });
+      }
+      state.dynamicDays = days;
+    }
+
+    // --- 5. NAVEGACIÓN Y CAMBIO DE PANTALLAS ---
+    function switchScreen(fromId, toId) {
+      const fromScreen = document.getElementById(fromId);
+      const toScreen = document.getElementById(toId);
+      if (!fromScreen || !toScreen) return;
+
+      state.currentScreen = toId.replace('screen-', '');
+
+      if (toId === 'screen-appointments') renderAppointments();
+      if (toId === 'screen-admin') renderAdminDashboard();
+
+      fromScreen.classList.add('screen-exit');
+      toScreen.classList.remove('hidden');
+      toScreen.classList.add('screen-enter');
+
+      setTimeout(() => {
+        fromScreen.classList.add('hidden');
+        fromScreen.classList.remove('screen-exit');
+        toScreen.classList.remove('screen-enter');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 380);
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    // --- 6. RENDERIZADO DE SERVICIOS (PANTALLA 1) ---
+    function renderServices() {
+      const container = document.getElementById('services-container');
+      if (!container) return;
+
+      container.innerHTML = CONFIG.services.map((service, index) => `
+        <div class="animate-fade-up group bg-white/5 border border-white/5 hover:border-[#F2C94C]/40 rounded-[1.8rem] p-5 flex flex-col justify-between transition-all duration-300 hover:scale-[1.01] hover:bg-white/[0.07] backdrop-blur-sm cursor-pointer shadow-lg"
+             style="animation-delay: ${index * 0.05}s;"
+             onclick="window.appSelectService(${service.id})">
+          
+          <div class="relative w-full h-44 rounded-2xl overflow-hidden mb-4 bg-zinc-900 border border-white/5">
+            <img src="${service.image}" alt="${service.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            ${service.popular ? `
+              <span class="absolute top-3 right-3 bg-gradient-to-r from-[#F2C94C] to-[#d4af37] text-black text-[11px] font-black uppercase px-3 py-1 rounded-full shadow-lg tracking-wider">
+                Popular
+              </span>
+            ` : ''}
+            <span class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-[#F2C94C]"></i> ${service.duration} min
+            </span>
+          </div>
+
+          <div class="flex-grow">
+            <div class="flex justify-between items-baseline mb-2">
+              <h3 class="font-bold text-xl text-white group-hover:text-[#F2C94C] transition-colors">${service.name}</h3>
+              <span class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F2C94C] to-[#d4af37]">
+                ${formatCurrency(service.price)}
+              </span>
+            </div>
+            <p class="text-sm text-gray-400 font-light line-clamp-2 leading-relaxed mb-4">${service.desc}</p>
+          </div>
+
+          <div class="mt-auto flex items-center justify-between border-t border-white/5 pt-4 group-hover:border-white/10 transition-colors">
+            <span class="text-xs text-gray-500 font-medium group-hover:text-[#F2C94C] transition-colors">Reservar este servicio</span>
+            <div class="bg-white/5 rounded-full p-2 group-hover:bg-[#F2C94C] group-hover:text-black transition-all duration-300 transform group-hover:-rotate-45">
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    window.appSelectService = function(id) {
+      state.selectedService = CONFIG.services.find(s => s.id === id);
+      document.getElementById('header-service-name').innerText = `${state.selectedService.name} • ${formatCurrency(state.selectedService.price)}`;
+      
+      switchScreen('screen-services', 'screen-booking');
+      resetBookingUI();
+      renderBarbers();
+    };
+
+    // --- 7. AGENDAMIENTO PASO A PASO (PANTALLA 2) ---
+    function resetBookingUI() {
+      state.selectedBarber = null;
+      state.selectedDate = null;
+      state.selectedTime = null;
+      document.getElementById('step-date')?.classList.add('hidden');
+      document.getElementById('step-time')?.classList.add('hidden');
+      document.getElementById('step-client-data')?.classList.add('hidden');
+      const footer = document.getElementById('booking-footer');
+      if (footer) {
+        footer.classList.remove('translate-y-0');
+        footer.classList.add('translate-y-full');
+      }
+    }
+
+    function renderBarbers() {
+      const container = document.getElementById('barbers-container');
+      container.innerHTML = CONFIG.barbers.map(barber => {
+        const isSelected = state.selectedBarber?.id === barber.id;
+        return `
+          <button type="button" 
+                  onclick="window.appSelectBarber(${barber.id})"
+                  class="snap-start shrink-0 flex flex-col items-center p-3 w-28 md:w-32 rounded-2xl transition-all border ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-[#F2C94C]/20 to-transparent border-[#F2C94C] shadow-[0_0_15px_rgba(242,201,76,0.25)]'
+                      : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                  }">
+            <div class="relative w-16 h-16 md:w-20 md:h-20 mb-3">
+              <img src="${barber.img}" alt="${barber.name}" class="w-full h-full object-cover rounded-full border-2 ${isSelected ? 'border-[#F2C94C]' : 'border-transparent'}">
+              ${isSelected ? `
+                <div class="absolute -bottom-1 -right-1 bg-[#F2C94C] rounded-full p-1 shadow-md">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-black"></i>
+                </div>
+              ` : ''}
+            </div>
+            <span class="font-bold text-sm md:text-base ${isSelected ? 'text-[#F2C94C]' : 'text-white'}">${barber.name}</span>
+            <span class="text-[0.65rem] md:text-xs text-gray-400 mt-0.5 uppercase tracking-wider">${barber.role}</span>
+          </button>
+        `;
+      }).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    window.appSelectBarber = function(id) {
+      state.selectedBarber = CONFIG.barbers.find(b => b.id === id);
+      renderBarbers();
+
+      const stepDate = document.getElementById('step-date');
+      stepDate.classList.remove('hidden');
+      stepDate.classList.add('animate-slide-down');
+      renderDays();
+      stepDate.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    function renderDays() {
+      const container = document.getElementById('days-container');
+      container.innerHTML = state.dynamicDays.map(day => {
+        const isSelected = state.selectedDate === day.fullDate;
+        return `
+          <button type="button" 
+                  onclick="window.appSelectDay('${day.fullDate}')"
+                  class="snap-start shrink-0 flex flex-col items-center justify-center w-[4.5rem] md:w-20 h-24 md:h-28 rounded-2xl transition-all border ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-[#F2C94C] to-[#d4af37] text-black border-[#F2C94C] shadow-[0_0_20px_rgba(242,201,76,0.3)]'
+                      : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white'
+                  }">
+            <span class="text-xs md:text-sm uppercase font-semibold tracking-widest ${isSelected ? 'text-black/80' : ''}">${day.abbrev}</span>
+            <span class="text-3xl md:text-4xl font-black mt-1">${day.num}</span>
+            ${day.isToday ? '<span class="text-[9px] uppercase tracking-tighter opacity-80 mt-0.5">Hoy</span>' : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    window.appSelectDay = function(fullDate) {
+      state.selectedDate = fullDate;
+      state.selectedTime = null;
+      renderDays();
+
+      state.occupiedSlots = DB.getOccupiedSlots(state.selectedBarber?.id, fullDate);
+
+      const stepTime = document.getElementById('step-time');
+      stepTime.classList.remove('hidden');
+      stepTime.classList.add('animate-slide-down');
+      renderTimes();
+      stepTime.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    function renderTimes() {
+      const container = document.getElementById('times-container');
+      container.innerHTML = CONFIG.timeSlots.map(time => {
+        const isOccupied = state.occupiedSlots.includes(time);
+        const isSelected = state.selectedTime === time;
+
+        let baseClass = 'py-3.5 rounded-xl text-sm font-semibold transition-all border tracking-wide flex flex-col items-center justify-center ';
+
+        if (isOccupied) {
+          return `
+            <button type="button" disabled class="${baseClass} bg-[#111] text-gray-600 border-transparent cursor-not-allowed opacity-60">
+              <span class="line-through decoration-gray-600">${time}</span>
+              <span class="text-[9px] text-red-500 font-normal">Ocupado</span>
+            </button>
+          `;
+        }
+
+        if (isSelected) {
+          return `
+            <button type="button" onclick="window.appSelectTime('${time}')" class="${baseClass} bg-[#F2C94C] text-black border-[#F2C94C] shadow-[0_0_15px_rgba(242,201,76,0.3)] font-bold">
+              <span>${time}</span>
+              <span class="text-[9px] text-black/80 font-medium">Elegido</span>
+            </button>
+          `;
+        }
+
+        return `
+          <button type="button" onclick="window.appSelectTime('${time}')" class="${baseClass} bg-white/5 border-white/5 text-gray-300 hover:border-white/20 hover:bg-white/10">
+            <span>${time}</span>
+            <span class="text-[9px] text-emerald-400 font-normal">Libre</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    window.appSelectTime = function(time) {
+      state.selectedTime = time;
+      renderTimes();
+
+      const stepClient = document.getElementById('step-client-data');
+      stepClient.classList.remove('hidden');
+      stepClient.classList.add('animate-slide-down');
+
+      const nameInput = document.getElementById('client-input-name');
+      const phoneInput = document.getElementById('client-input-phone');
+      const emailInput = document.getElementById('client-input-email');
+
+      if (nameInput && !nameInput.value) nameInput.value = state.userProfile.name || '';
+      if (phoneInput && !phoneInput.value) phoneInput.value = state.userProfile.phone || '';
+      if (emailInput && !emailInput.value) emailInput.value = state.userProfile.email || '';
+
+      const footer = document.getElementById('booking-footer');
+      footer.classList.remove('translate-y-full');
+      footer.classList.add('translate-y-0');
+
+      stepClient.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    window.appConfirmBooking = function() {
+      const name = document.getElementById('client-input-name')?.value.trim();
+      const phone = document.getElementById('client-input-phone')?.value.trim();
+      const email = document.getElementById('client-input-email')?.value.trim();
+      const notes = document.getElementById('client-input-notes')?.value.trim();
+
+      if (!state.selectedService || !state.selectedBarber || !state.selectedDate || !state.selectedTime) {
+        alert('Por favor completa todos los pasos de la reserva.');
+        return;
+      }
+      if (!name) {
+        alert('Por favor escribe tu nombre completo.');
+        document.getElementById('client-input-name')?.focus();
+        return;
+      }
+      if (!phone) {
+        alert('Por favor escribe tu WhatsApp o teléfono.');
+        document.getElementById('client-input-phone')?.focus();
+        return;
+      }
+
+      const code = 'LVL-' + Math.floor(1000 + Math.random() * 9000);
+      const booking = {
+        code,
+        clientName: name,
+        clientPhone: phone,
+        clientEmail: email || 'Sin correo',
+        barberId: state.selectedBarber.id,
+        barberName: state.selectedBarber.name,
+        serviceId: state.selectedService.id,
+        serviceName: state.selectedService.name,
+        price: state.selectedService.price,
+        date: state.selectedDate,
+        time: state.selectedTime,
+        notes: notes || '',
+        status: 'CONFIRMADA',
+        createdAt: new Date().toISOString()
+      };
+
+      DB.saveBooking(booking);
+
+      // Guardar perfil
+      state.userProfile.name = name;
+      state.userProfile.phone = phone;
+      if (email) state.userProfile.email = email;
+      DB.saveProfile(state.userProfile);
+
+      // Modal de éxito
+      document.getElementById('success-code').innerText = booking.code;
+      document.getElementById('success-barber').innerText = booking.barberName;
+      document.getElementById('success-service').innerText = booking.serviceName;
+      document.getElementById('success-datetime').innerText = `${booking.date} - ${booking.time}`;
+      document.getElementById('success-total').innerText = formatCurrency(booking.price);
+
+      // WhatsApp Button
+      document.getElementById('btn-success-wa').onclick = () => {
+        const msg = `💈 *NUEVA RESERVA - ${CONFIG.shopName.toUpperCase()}* 💈%0A%0A` +
+          `🔖 *Código:* ${booking.code}%0A` +
+          `👤 *Cliente:* ${booking.clientName}%0A` +
+          `📱 *Teléfono:* ${booking.clientPhone}%0A` +
+          `✂️ *Servicio:* ${booking.serviceName}%0A` +
+          `💈 *Barbero:* ${booking.barberName}%0A` +
+          `📅 *Fecha:* ${booking.date}%0A` +
+          `⏰ *Hora:* ${booking.time}%0A` +
+          `💰 *Total:* ${formatCurrency(booking.price)}%0A` +
+          (booking.notes ? `📝 *Notas:* ${booking.notes}%0A` : '') +
+          `%0A_Hola, acabo de agendar mi turno en la web. ¿Me confirman la disponibilidad en el sistema?_`;
+        window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${msg}`, '_blank');
+      };
+
+      // Email Button
+      document.getElementById('btn-success-email').onclick = () => {
+        const subject = encodeURIComponent(`Confirmación de Cita ${booking.code} - ${CONFIG.shopName}`);
+        const body = encodeURIComponent(
+          `Hola ${booking.clientName},\n\nTu cita en ${CONFIG.shopName} está confirmada:\n\n` +
+          `- Código: ${booking.code}\n- Barbero: ${booking.barberName}\n- Servicio: ${booking.serviceName}\n` +
+          `- Fecha: ${booking.date} a las ${booking.time}\n- Total: ${formatCurrency(booking.price)}\n\n` +
+          `¡Te esperamos en la barbería!`
+        );
+        window.location.href = `mailto:${booking.clientEmail}?subject=${subject}&body=${body}`;
+      };
+
+      // ICS Calendar Button
+      document.getElementById('btn-success-ics').onclick = () => {
+        const icsContent = [
+          'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Level VIP Barbershop//ES',
+          'BEGIN:VEVENT', `UID:${booking.code}@levelbarber.com`,
+          `SUMMARY:Cita: ${booking.serviceName} (${booking.barberName})`,
+          `DESCRIPTION:Cita confirmada en ${CONFIG.shopName}. Código: ${booking.code}.`,
+          `LOCATION:${CONFIG.shopName}`, 'STATUS:CONFIRMED', 'END:VEVENT', 'END:VCALENDAR'
+        ].join('\r\n');
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', `cita-${booking.code}.ics`);
+        link.click();
+      };
+
+      const modal = document.getElementById('modal-booking-success');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.appCloseSuccessModal = function() {
+      const modal = document.getElementById('modal-booking-success');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      switchScreen('screen-booking', 'screen-appointments');
+    };
+
+    // --- 8. MIS CITAS (PANTALLA 3) ---
+    function renderAppointments() {
+      const listContainer = document.getElementById('appointments-list');
+      const emptyContainer = document.getElementById('appointments-empty');
+      const bookings = DB.getBookings();
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const filtered = bookings.filter(b => {
+        if (b.status === 'CANCELADA') return state.currentAptTab === 'history';
+        return state.currentAptTab === 'upcoming' ? b.date >= todayStr : b.date < todayStr;
+      });
+
+      if (filtered.length === 0) {
+        listContainer.classList.add('hidden');
+        emptyContainer.classList.remove('hidden');
+        document.getElementById('empty-state-text').innerText = state.currentAptTab === 'upcoming'
+          ? 'Aún no tienes reservas programadas para los próximos días.'
+          : 'No tienes historial de citas pasadas.';
+        return;
+      }
+
+      listContainer.classList.remove('hidden');
+      emptyContainer.classList.add('hidden');
+
+      listContainer.innerHTML = filtered.map((apt, index) => {
+        const isUpcoming = state.currentAptTab === 'upcoming' && apt.status !== 'CANCELADA';
+        const barberObj = CONFIG.barbers.find(b => b.id == apt.barberId) || CONFIG.barbers[0];
+
+        return `
+          <div class="animate-fade-up bg-white/5 border border-white/10 rounded-[1.5rem] p-5 flex flex-col gap-4 relative overflow-hidden backdrop-blur-sm hover:border-white/20 transition-all"
+               style="animation-delay: ${index * 0.08}s;">
+            <div class="absolute top-0 left-0 w-1.5 h-full ${isUpcoming ? 'bg-gradient-to-b from-[#F2C94C] to-[#d4af37] shadow-[0_0_15px_rgba(242,201,76,0.3)]' : 'bg-zinc-600'}"></div>
+            
+            <div class="flex justify-between items-start pl-2">
+              <div>
+                <span class="text-[10px] font-mono text-[#F2C94C] uppercase tracking-wider font-bold">${apt.code}</span>
+                <h4 class="font-bold text-lg md:text-xl text-white tracking-wide mt-0.5">${apt.serviceName}</h4>
+                <div class="flex items-center gap-2 mt-1">
+                  <img src="${barberObj.img}" class="w-6 h-6 rounded-full border border-white/20 object-cover">
+                  <span class="text-sm text-gray-400 font-medium">con ${apt.barberName}</span>
+                </div>
+              </div>
+              <span class="text-xs font-semibold px-3 py-1 rounded-full ${isUpcoming ? 'bg-[#F2C94C]/10 text-[#F2C94C] border border-[#F2C94C]/20' : 'bg-white/5 text-gray-400 border border-white/10'}">
+                ${apt.status}
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pl-2 pt-2 border-t border-white/5 text-xs">
+              <div class="flex items-center gap-4 text-gray-300">
+                <span class="flex items-center gap-1.5 font-medium"><i data-lucide="calendar" class="w-4 h-4 text-[#F2C94C]"></i> ${apt.date}</span>
+                <span class="flex items-center gap-1.5 font-medium"><i data-lucide="clock" class="w-4 h-4 text-[#F2C94C]"></i> ${apt.time}</span>
+              </div>
+              <span class="font-black text-white text-base">${formatCurrency(apt.price)}</span>
+            </div>
+
+            ${isUpcoming ? `
+              <div class="flex items-center justify-end gap-2 pt-1 pl-2">
+                <button onclick="window.appCancelBooking('${apt.code}')" class="px-3 py-1.5 text-xs text-red-400 hover:text-red-300">
+                  Cancelar
+                </button>
+                <button onclick="window.appNotifyWa('${apt.code}')" class="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Avisar WhatsApp
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    window.appCancelBooking = function(code) {
+      if (confirm(`¿Deseas cancelar la cita ${code}?`)) {
+        DB.updateStatus(code, 'CANCELADA');
+        renderAppointments();
+      }
+    };
+
+    window.appNotifyWa = function(code) {
+      const b = DB.getBookings().find(item => item.code === code);
+      if (b) {
+        const msg = `Hola, confirmo mi asistencia a la cita ${b.code} con ${b.barberName} el día ${b.date} a las ${b.time}.`;
+        window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    };
+
+    // --- 9. PERFIL DE USUARIO (PANTALLA 4) ---
+    function renderProfile() {
+      const prof = state.userProfile;
+      const initial = (prof.name || 'U').charAt(0).toUpperCase();
+
+      document.getElementById('top-bar-avatar').innerText = initial;
+      document.getElementById('profile-avatar-large').innerText = initial;
+      document.getElementById('profile-display-name').innerText = prof.name || 'Usuario VIP';
+
+      document.getElementById('profile-name-input').value = prof.name || '';
+      document.getElementById('profile-phone-input').value = prof.phone || '';
+      document.getElementById('profile-email-input').value = prof.email || '';
+    }
+
+    // --- 10. PANEL STAFF / ADMIN (PANTALLA 5) ---
+    function renderAdminDashboard() {
+      const bookings = DB.getBookings();
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      document.getElementById('admin-stat-total').innerText = bookings.length;
+      document.getElementById('admin-stat-today').innerText = bookings.filter(b => b.date === todayStr && b.status !== 'CANCELADA').length;
+      document.getElementById('admin-stat-pending').innerText = bookings.filter(b => b.status === 'PENDIENTE').length;
+
+      const rev = bookings
+        .filter(b => b.status === 'CONFIRMADA' || b.status === 'COMPLETADA')
+        .reduce((sum, b) => sum + (b.price || 0), 0);
+      document.getElementById('admin-stat-revenue').innerText = formatCurrency(rev);
+
+      renderAdminTable();
+    }
+
+    function renderAdminTable() {
+      const tbody = document.getElementById('admin-table-body');
+      const bFilter = document.getElementById('admin-filter-barber').value;
+      const sFilter = document.getElementById('admin-filter-status').value;
+      const dFilter = document.getElementById('admin-filter-date').value;
+
+      let list = DB.getBookings();
+      if (bFilter !== 'ALL') list = list.filter(b => b.barberId == bFilter);
+      if (sFilter !== 'ALL') list = list.filter(b => b.status === sFilter);
+      if (dFilter) list = list.filter(b => b.date === dFilter);
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-gray-500">No hay citas con estos filtros.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(b => `
+        <tr class="border-b border-white/5 hover:bg-white/[0.02] text-xs">
+          <td class="py-3.5 px-3 font-mono font-bold text-[#F2C94C]">${b.code}</td>
+          <td class="py-3.5 px-3">
+            <div class="font-bold text-white">${b.clientName}</div>
+            <div class="text-[11px] text-gray-400">${b.clientPhone}</div>
+          </td>
+          <td class="py-3.5 px-3 text-gray-300">${b.barberName}</td>
+          <td class="py-3.5 px-3 text-gray-300">${b.serviceName}</td>
+          <td class="py-3.5 px-3">
+            <div class="text-white font-semibold">${b.date}</div>
+            <div class="text-[11px] text-[#F2C94C]">${b.time}</div>
+          </td>
+          <td class="py-3.5 px-3 font-bold text-white">${formatCurrency(b.price)}</td>
+          <td class="py-3.5 px-3">
+            <select onchange="window.appChangeStatus('${b.code}', this.value)" class="bg-[#111] border border-white/10 rounded-lg px-2 py-1 text-white text-[11px] outline-none">
+              <option value="CONFIRMADA" ${b.status === 'CONFIRMADA' ? 'selected' : ''}>Confirmada</option>
+              <option value="PENDIENTE" ${b.status === 'PENDIENTE' ? 'selected' : ''}>Pendiente</option>
+              <option value="COMPLETADA" ${b.status === 'COMPLETADA' ? 'selected' : ''}>Completada</option>
+              <option value="CANCELADA" ${b.status === 'CANCELADA' ? 'selected' : ''}>Cancelada</option>
+            </select>
+          </td>
+          <td class="py-3.5 px-3 text-center">
+            <button onclick="window.appBarberNotifyWa('${b.code}')" title="Avisar por WhatsApp al cliente" class="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    window.appChangeStatus = function(code, newStatus) {
+      DB.updateStatus(code, newStatus);
+      renderAdminDashboard();
+    };
+
+    window.appBarberNotifyWa = function(code) {
+      const b = DB.getBookings().find(item => item.code === code);
+      if (b) {
+        const cleanPhone = b.clientPhone.replace(/[^0-9]/g, '');
+        const msg = `¡Hola ${b.clientName}! 👋 Te confirmamos tu cita en *${CONFIG.shopName}*. Código: ${b.code}. Servicio: ${b.serviceName} con ${b.barberName} el ${b.date} a las ${b.time}. ¡Te esperamos!`;
+        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    };
+
+    // --- 11. INICIALIZACIÓN COMPLETA AL CARGAR EL DOM ---
+    window.addEventListener('DOMContentLoaded', () => {
+      generateDays();
+      renderServices();
+      renderProfile();
+
+      // Navegación
+      document.getElementById('btn-profile').onclick = () => switchScreen('screen-services', 'screen-profile');
+      document.getElementById('btn-appointments').onclick = () => switchScreen('screen-services', 'screen-appointments');
+      document.getElementById('btn-admin-access').onclick = () => switchScreen('screen-profile', 'screen-admin');
+
+      document.getElementById('btn-back-booking').onclick = () => switchScreen('screen-booking', 'screen-services');
+      document.getElementById('btn-back-appointments').onclick = () => switchScreen('screen-appointments', 'screen-services');
+      document.getElementById('btn-back-profile').onclick = () => switchScreen('screen-profile', 'screen-services');
+      document.getElementById('btn-back-admin').onclick = () => switchScreen('screen-admin', 'screen-services');
+      document.getElementById('btn-empty-book').onclick = () => switchScreen('screen-appointments', 'screen-services');
+
+      // Tabs de citas
+      const tabUp = document.getElementById('tab-upcoming');
+      const tabHist = document.getElementById('tab-history');
+
+      tabUp.onclick = () => {
+        state.currentAptTab = 'upcoming';
+        tabUp.className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-[#F2C94C] text-black transition-all duration-300 z-10 shadow-[0_2px_10px_rgba(242,201,76,0.3)]';
+        tabHist.className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-gray-400 hover:text-white transition-all duration-300 z-10';
+        renderAppointments();
+      };
+
+      tabHist.onclick = () => {
+        state.currentAptTab = 'history';
+        tabHist.className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-[#F2C94C] text-black transition-all duration-300 z-10 shadow-[0_2px_10px_rgba(242,201,76,0.3)]';
+        tabUp.className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-gray-400 hover:text-white transition-all duration-300 z-10';
+        renderAppointments();
+      };
+
+      // Filtros Admin
+      document.getElementById('admin-filter-barber').onchange = renderAdminTable;
+      document.getElementById('admin-filter-status').onchange = renderAdminTable;
+      document.getElementById('admin-filter-date').onchange = renderAdminTable;
+
+      // Guardar Perfil
+      document.getElementById('form-profile').onsubmit = (e) => {
+        e.preventDefault();
+        const n = document.getElementById('profile-name-input').value.trim();
+        const p = document.getElementById('profile-phone-input').value.trim();
+        const em = document.getElementById('profile-email-input').value.trim();
+        state.userProfile.name = n || 'Usuario VIP';
+        state.userProfile.phone = p;
+        state.userProfile.email = em;
+        DB.saveProfile(state.userProfile);
+        renderProfile();
+        alert('Perfil actualizado con éxito');
+      };
+
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
